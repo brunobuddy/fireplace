@@ -114,10 +114,14 @@ Host ports are overridable to dodge collisions: `POSTGRES_HOST_PORT`,
 frontend's `API_URL` consistent with those ports.
 
 Images (both build with **repo root as context**):
-- `backend/Dockerfile` — Debian-slim builder (so `better-sqlite3` uses a
-  prebuilt binary, no musl rebuild) → prod-deps-only runtime, non-root
-  (`node`), `node backend/dist/main.js`. `npm ci` uses `--ignore-scripts`
-  (skips the root `prepare`→husky dev hook). ~526 MB (see §9).
+- `backend/Dockerfile` — Alpine builder + runtime (safe: `--ignore-scripts`
+  → no native build at install, and every backend *prod* dep is pure JS).
+  Runtime install is **scoped to the backend workspace**
+  (`npm ci --omit=dev --ignore-scripts -w @fireplace/backend`) so the
+  frontend's Kobalte/solid/font payload is never shipped in the API image.
+  Non-root (`node`), `node backend/dist/main.js`. ~401 MB (was 526 MB;
+  ~149 MB is backend node_modules, the rest is the Node base + buildkit
+  attestation overhead).
 - `frontend/Dockerfile` — Vite build → **non-root nginx-unprivileged**
   (~75 MB). Listens `${PORT}` (default 8080). An entrypoint script
   (`docker/30-fireplace-env.sh`) writes `/env.js` from `$API_URL` at
@@ -168,9 +172,10 @@ enum/jsonb; `status` is varchar). Backend lint = prettier-as-eslint; run
 
 ## 9. Known follow-ups
 
-- Backend image is ~526 MB: `npm ci --omit=dev` at root pulls the
-  frontend's prod deps too. Trim by isolating the backend workspace
-  install if size matters.
+- ✅ Done: backend image slimmed 526 → ~401 MB (Alpine + workspace-scoped
+  prod install, no frontend payload). Further cuts would need bundling the
+  app (`nest build --webpack`) — deferred (risky with TypeORM dynamic
+  requires / decorators; disproportionate for a scaffold).
 - `synchronize` instead of migrations — fine for the scaffold; add TypeORM
   migrations before real data exists.
 - Auth: the model is family-scoped; layer real authentication on the
