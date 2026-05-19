@@ -1,0 +1,69 @@
+# Two ways to use this file:
+#   • `npm run db:up`          → just Postgres (local dev DB; no profile)
+#   • `npm run app:up`         → full containerised stack (profile: app)
+#
+# Host ports are overridable so they don't collide with anything already
+# bound on the machine (e.g. POSTGRES_HOST_PORT, API_HOST_PORT, WEB_HOST_PORT).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fireplace-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fireplace
+      POSTGRES_PASSWORD: fireplace
+      POSTGRES_DB: fireplace
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - fireplace-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fireplace -d fireplace"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: fireplace-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_SYNCHRONIZE: "true"
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: fireplace
+      DB_PASSWORD: fireplace
+      DB_NAME: fireplace
+      # The browser reaches the API on the host, so CORS must allow the
+      # host-facing web origin (not the compose-internal hostname).
+      CORS_ORIGINS: "http://localhost:${WEB_HOST_PORT:-8080}"
+    ports:
+      - "${API_HOST_PORT:-3000}:3000"
+
+  frontend:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: fireplace-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      PORT: 8080
+      # Injected into /env.js at start. Browser-facing → host URL of the API.
+      API_URL: "http://localhost:${API_HOST_PORT:-3000}"
+    ports:
+      - "${WEB_HOST_PORT:-8080}:8080"
+
+volumes:
+  fireplace-pgdata:
