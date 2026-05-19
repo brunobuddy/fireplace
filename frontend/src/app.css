@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Fireplace — a warm, cosy family home.
+   Palette: oat-milk creams, terracotta, honey amber, herb green.
+   ============================================================ */
+@layer base {
+  :root {
+    --background: 36 44% 96%;
+    --foreground: 22 28% 20%;
+    --card: 38 52% 98%;
+    --card-foreground: 22 28% 20%;
+    --popover: 38 52% 98%;
+    --popover-foreground: 22 28% 20%;
+    --primary: 16 72% 52%;
+    --primary-foreground: 38 60% 98%;
+    --secondary: 33 48% 90%;
+    --secondary-foreground: 22 30% 28%;
+    --muted: 36 32% 91%;
+    --muted-foreground: 26 14% 46%;
+    --accent: 41 86% 62%;
+    --accent-foreground: 28 45% 20%;
+    --destructive: 4 66% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 138 38% 42%;
+    --success-foreground: 0 0% 100%;
+    --border: 30 26% 84%;
+    --input: 30 26% 84%;
+    --ring: 16 72% 52%;
+    --radius: 1.1rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: 22 22% 9%;
+      --foreground: 36 30% 92%;
+      --card: 22 20% 12%;
+      --card-foreground: 36 30% 92%;
+      --popover: 22 20% 12%;
+      --popover-foreground: 36 30% 92%;
+      --primary: 16 74% 56%;
+      --primary-foreground: 24 30% 12%;
+      --secondary: 24 14% 20%;
+      --secondary-foreground: 36 26% 88%;
+      --muted: 24 12% 18%;
+      --muted-foreground: 30 12% 64%;
+      --accent: 39 70% 56%;
+      --accent-foreground: 24 35% 12%;
+      --destructive: 4 60% 54%;
+      --destructive-foreground: 0 0% 100%;
+      --success: 138 32% 52%;
+      --success-foreground: 24 30% 10%;
+      --border: 24 12% 22%;
+      --input: 24 12% 24%;
+      --ring: 16 74% 56%;
+    }
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    color-scheme: light dark;
+    overscroll-behavior-y: none;
+    /* a faint hearth-glow warming the top of the page */
+    background-image: radial-gradient(
+      120% 60% at 50% -10%,
+      hsl(var(--accent) / 0.18),
+      transparent 70%
+    );
+    background-attachment: fixed;
+  }
+
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

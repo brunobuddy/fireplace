@@ -1,0 +1,41 @@
+{
+  "name": "fireplace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fireplace — a family management app. First feature: a collaborative real-time grocery list.",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d",
+    "app:up": "docker compose --profile app up -d --build",
+    "app:down": "docker compose --profile app down",
+    "app:logs": "docker compose --profile app logs -f",
+    "dev": "concurrently -n api,web -c blue,magenta \"npm run start:dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
+    "build": "npm run build --workspace=backend && npm run build --workspace=frontend",
+    "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend",
+    "typecheck": "npm run typecheck --workspace=backend && npm run typecheck --workspace=frontend",
+    "test": "npm test --workspace=backend && npm test --workspace=frontend",
+    "test:e2e": "npm run test:e2e --workspace=backend",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10"
+  },
+  "lint-staged": {
+    "backend/**/*.ts": [
+      "npm run lint --workspace=backend --"
+    ],
+    "frontend/**/*.{ts,tsx}": [
+      "npm run lint --workspace=frontend --"
+    ]
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

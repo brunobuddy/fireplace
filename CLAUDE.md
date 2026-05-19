@@ -1,0 +1,186 @@
+# CLAUDE.md — Fireplace
+
+Operating guide for this repo. Read this before working here. The user's
+**global** `~/.claude/CLAUDE.md` rules still apply on top of this (commit
+policy, no AI branding, branch naming, never push to main, run all tests
+before a PR).
+
+---
+
+## 1. What this is
+
+**Fireplace** is a family-management app (a family with kids). It is built
+feature-by-feature; more views are planned (agenda, conversations). The
+scaffold was deliberately shaped so new views slot in without rework.
+
+**Feature 1 (done): a collaborative, real-time grocery list** — built
+together, run through at the supermarket, items checked off live across
+phones.
+
+## 2. Stack
+
+| Layer    | Choice                                                    |
+| -------- | --------------------------------------------------------- |
+| Backend  | NestJS (TypeScript), modular + SOLID                      |
+| ORM      | TypeORM                                                   |
+| Database | PostgreSQL (Docker locally; managed/Railway in prod)      |
+| Realtime | Socket.IO (NestJS gateway ⇄ Solid store)                  |
+| Frontend | SolidJS + Vite (TypeScript), feature-sliced               |
+| UI       | **Kobalte** primitives + **solid-ui**-style components, Tailwind |
+| Tooling  | npm workspaces · ESLint · Prettier · Husky · GH Actions   |
+| Deploy   | Multi-stage Docker images · docker-compose · Railway      |
+
+Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
+`frontend/` (`@fireplace/frontend`).
+
+## 3. Decisions log (don't relitigate without asking)
+
+- **Identity = profile switcher, no passwords.** Seeded family + members;
+  the chosen member is stamped on items. Data model is family-scoped so
+  real auth slots in later — that's the seam, no migration needed.
+- **Sync = real-time Socket.IO.** All mutations are optimistic and
+  **idempotent by item id**, so HTTP responses and socket broadcasts
+  converge without flicker.
+- **UI = Kobalte + solid-ui** (Tailwind, CVA, `cn`). Components live in
+  `frontend/src/components/ui/`. Interactive ones are Kobalte-backed
+  (accessible by default).
+- **Look = warm & cosy "family home".** Palette: oat-milk cream bg with a
+  hearth-glow, terracotta primary, honey-amber accent, herb-green success;
+  warm espresso dark mode (follows OS). Fonts: **Nunito** (UI) +
+  **Baloo 2** (display/wordmark), self-hosted via `@fontsource`,
+  latin-only. Tokens in `frontend/src/app.css` + `tailwind.config.cjs`.
+
+## 4. Architecture
+
+### Backend — SOLID, modular
+- Feature modules: `family/`, `groceries/`, `health/`; `database/` owns the
+  connection + bootstrap seeder. New domains are added to `app.module.ts`
+  without touching existing ones (OCP).
+- **Dependency Inversion:** `GroceriesService` depends on the
+  `IGroceryItemRepository` port (token + interface), bound to a TypeORM
+  adapter in the module. Swap persistence / fake in tests = one line.
+- **SRP:** thin controllers, use cases in services, the gateway is pure
+  websocket transport, repositories only persist.
+- DTOs validated globally (`class-validator` + `ValidationPipe`).
+- `database.config.ts` resolution order: `NODE_ENV=test` → in-memory
+  SQLite; `DATABASE_URL` set → that URL (Railway); else discrete `DB_*`.
+  `DB_SYNCHRONIZE` (default: on unless `NODE_ENV=production`) controls
+  schema sync — **no migrations yet**. `DB_SSL` / `sslmode=require` → TLS.
+- The seeder (`database/seed/`) is idempotent: ensures the aisle catalogue
+  + one demo family ("The Sample Family": Alex, Sam, Robin) on boot.
+- `GET /api/health` → liveness probe (Docker + Railway).
+
+### Frontend — feature-sliced, fine-grained reactivity
+- `features/groceries`, `features/family`; shared `shared/ui`,
+  `shared/layout`, `components/ui` (the solid-ui layer); routing via
+  `@solidjs/router`, bottom-nav already anticipates future views.
+- One `createStore` controller is the source of truth; pure list logic in
+  `groceries.helpers.ts` is isolated and unit-tested.
+- **Runtime API URL:** resolved by `lib/runtime-config.ts` in order:
+  `window.__FIREPLACE__.apiUrl` (from `/env.js`, injected at container
+  start from `API_URL`) → `VITE_API_URL` (build-time, dev) → localhost.
+  This is why one frontend image deploys anywhere.
+
+## 5. Local development
+
+```bash
+npm run db:up        # Postgres only (compose, no profile)
+npm install
+npm run dev          # API (nest watch) + Vite, concurrently
+```
+
+⚠️ **Host port 5432 is often taken** on this machine by an unrelated
+`postgres_db` container. Override with `POSTGRES_HOST_PORT`, or point the
+backend at another Postgres via `DB_*` / `DATABASE_URL`.
+
+The `/serve` skill in this environment is written for a *different*
+project (Manifest); for Fireplace it was adapted to: two random ports,
+Vite serving the SPA, backend separate, a throwaway DB inside the existing
+`postgres_db` container. There is no Wingman drawer here — that checklist
+is N/A.
+
+## 6. Docker
+
+`docker-compose.yml` uses **profiles**:
+
+```bash
+npm run db:up        # docker compose up -d        → Postgres only
+npm run app:up       # --profile app up -d --build → postgres+backend+frontend
+npm run app:down
+```
+
+Host ports are overridable to dodge collisions: `POSTGRES_HOST_PORT`,
+`API_HOST_PORT`, `WEB_HOST_PORT`. Compose keeps `CORS_ORIGINS` and the
+frontend's `API_URL` consistent with those ports.
+
+Images (both build with **repo root as context**):
+- `backend/Dockerfile` — Debian-slim builder (so `better-sqlite3` uses a
+  prebuilt binary, no musl rebuild) → prod-deps-only runtime, non-root
+  (`node`), `node backend/dist/main.js`. `npm ci` uses `--ignore-scripts`
+  (skips the root `prepare`→husky dev hook). ~526 MB (see §9).
+- `frontend/Dockerfile` — Vite build → **non-root nginx-unprivileged**
+  (~75 MB). Listens `${PORT}` (default 8080). An entrypoint script
+  (`docker/30-fireplace-env.sh`) writes `/env.js` from `$API_URL` at
+  start. SPA history fallback + asset caching in
+  `docker/default.conf.template`.
+
+Verified locally: postgres→backend→frontend all healthy, runtime `env.js`
+injection correct, CORS, SPA fallback, and a real write through the
+in-container DB.
+
+## 7. Railway deployment
+
+Railway deploys each service from its Dockerfile (config-as-code in
+`deploy/`).
+
+1. **Add a Postgres** (Railway plugin).
+2. **Backend service** — config path `deploy/railway.backend.json`
+   (Dockerfile `backend/Dockerfile`, healthcheck `/api/health`). Env:
+   - `DATABASE_URL = ${{Postgres.DATABASE_URL}}`
+   - `DB_SYNCHRONIZE = true`  (no migrations yet — needed on first deploy)
+   - `DB_SSL = true`  (managed Postgres)
+   - `NODE_ENV = production`
+   - `CORS_ORIGINS = https://<frontend-domain>`
+   - `PORT` is provided by Railway.
+3. **Frontend service** — config path `deploy/railway.frontend.json`
+   (Dockerfile `frontend/Dockerfile`, healthcheck `/env.js`). Env:
+   - `API_URL = https://<backend-domain>`  (baked into `/env.js` at start)
+   - `PORT` is provided by Railway (nginx templates `listen ${PORT}`).
+
+No rebuild needed to repoint the frontend — just change `API_URL`.
+
+## 8. Testing / validation gate
+
+Run from repo root; **all must be green before a PR** (global rule):
+
+```bash
+npm run typecheck    # tsc --noEmit, both workspaces
+npm run lint         # ESLint --max-warnings 0, both
+npm test             # unit: backend Jest + frontend Vitest
+npm run test:e2e     # backend e2e — in-memory SQLite, no DB needed
+npm run build        # nest build + vite build
+```
+
+Current baseline: typecheck ✅ · lint ✅ · unit 7+7 ✅ · e2e 6 ✅ · build ✅.
+e2e/test uses SQLite on purpose → entities avoid pg-only types (no native
+enum/jsonb; `status` is varchar). Backend lint = prettier-as-eslint; run
+`npm run format --workspace=@fireplace/backend` to auto-fix.
+
+## 9. Known follow-ups
+
+- Backend image is ~526 MB: `npm ci --omit=dev` at root pulls the
+  frontend's prod deps too. Trim by isolating the backend workspace
+  install if size matters.
+- `synchronize` instead of migrations — fine for the scaffold; add TypeORM
+  migrations before real data exists.
+- Auth: the model is family-scoped; layer real authentication on the
+  profile-switcher seam when needed.
+
+## 10. Roadmap
+
+- [x] Real-time collaborative grocery list (warm/cosy UI)
+- [x] Dockerised + Railway-ready
+- [ ] Family agenda / shared calendar
+- [ ] Family conversations
+- [ ] Real authentication
+- [ ] DB migrations

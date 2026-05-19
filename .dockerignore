@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/build
+**/coverage
+**/.vite
+.git
+.github
+**/*.log
+**/.env
+**/.env.*
+*.sqlite
+.husky
+.claude
+README.md
