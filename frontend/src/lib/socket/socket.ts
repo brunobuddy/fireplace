@@ -1,5 +1,5 @@
 import { io, type Socket } from 'socket.io-client';
-import { API_URL } from '../api/http';
+import { getAuthToken } from '../api/auth-token';
 
 /**
  * The websocket event contract — must mirror the backend's `GROCERY_EVENTS`.
@@ -14,13 +14,28 @@ export const GROCERY_EVENTS = {
 
 let socket: Socket | null = null;
 
-/** Lazily create one shared connection for the whole app. */
+/**
+ * Lazily create one shared connection for the whole app. The current bearer
+ * token rides along in the handshake so the gateway can authenticate it —
+ * this is only ever called from authenticated views, so a token is present.
+ */
 export function getSocket(): Socket {
   if (!socket) {
-    socket = io(API_URL, {
+    // No URL → same origin. NestJS serves the websocket in prod; Vite proxies
+    // `/socket.io` (ws) in dev. The bearer token rides in the handshake.
+    socket = io({
       transports: ['websocket'],
       autoConnect: true,
+      auth: { token: getAuthToken() ?? '' },
     });
   }
   return socket;
+}
+
+/** Tear the connection down on logout so the next login reconnects fresh. */
+export function disconnectSocket(): void {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
 }
