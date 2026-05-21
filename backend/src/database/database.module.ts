@@ -5,6 +5,8 @@ import { Family } from '../family/entities/family.entity';
 import { Member } from '../family/entities/member.entity';
 import { GroceryList } from '../groceries/entities/grocery-list.entity';
 import { GroceryCategory } from '../groceries/entities/grocery-category.entity';
+import { Todo } from '../todos/entities/todo.entity';
+import { TodoComment } from '../todos/entities/todo-comment.entity';
 import { SeederService } from './seed/seeder.service';
 
 /**
@@ -15,7 +17,14 @@ import { SeederService } from './seed/seeder.service';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({ useFactory: buildDatabaseConfig }),
-    TypeOrmModule.forFeature([Family, Member, GroceryList, GroceryCategory]),
+    TypeOrmModule.forFeature([
+      Family,
+      Member,
+      GroceryList,
+      GroceryCategory,
+      Todo,
+      TodoComment,
+    ]),
   ],
   providers: [SeederService],
 })

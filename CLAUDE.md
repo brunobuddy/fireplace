@@ -17,6 +17,11 @@ scaffold was deliberately shaped so new views slot in without rework.
 together, run through at the supermarket, items checked off live across
 phones.
 
+**Feature 2 (done): a shared real-time to-do board** — each task carries a
+criticality (low / medium / high) and a live comment thread; every
+task and comment is stamped with the family member who created it. Built
+mobile-first — tap a task to expand it inline (accordion).
+
 ## 2. Stack
 
 | Layer    | Choice                                                    |
@@ -67,21 +72,27 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
 ## 4. Architecture
 
 ### Backend — SOLID, modular
-- Feature modules: `auth/`, `family/`, `groceries/`, `health/`; `database/`
-  owns the connection + bootstrap seeder. New domains are added to
-  `app.module.ts` without touching existing ones (OCP).
+- Feature modules: `auth/`, `family/`, `groceries/`, `todos/`, `health/`;
+  `database/` owns the connection + bootstrap seeder. New domains are added
+  to `app.module.ts` without touching existing ones (OCP).
 - **Auth:** `auth/` gates the app. `EnvUserStore` (the swap-for-DB seam, DIP)
   parses `AUTH_USERS` and feeds `AuthService` (constant-time SHA-256 compare
   for plaintext / bcrypt for hashes; JWT mint + verify). A global
   `JwtAuthGuard` (`APP_GUARD`) denies by default; `@Public()` exempts
-  `POST /api/auth/login` + `GET /api/health`. `GroceriesGateway` verifies the
-  handshake token and drops unauthenticated sockets. Fail-closed: in
-  production a missing `JWT_SECRET` aborts boot; outside production an
-  insecure dev secret + demo login (`demo@fireplace.app` / `demo`) are used
-  and logged.
+  `POST /api/auth/login` + `GET /api/health`. `GroceriesGateway` and
+  `TodosGateway` verify the handshake token and drop unauthenticated sockets.
+  Fail-closed: in production a missing `JWT_SECRET` aborts boot; outside
+  production an insecure dev secret + demo login (`demo@fireplace.app` /
+  `demo`) are used and logged.
 - **Dependency Inversion:** `GroceriesService` depends on the
   `IGroceryItemRepository` port (token + interface), bound to a TypeORM
   adapter in the module. Swap persistence / fake in tests = one line.
+- **Todos** reuse the same shape: an `ITodoRepository` port wraps the Todo
+  aggregate (task + its comments), a `TodosGateway` broadcasts to a
+  per-family room (`family-todos:<id>`), and comment add/remove re-emit the
+  whole todo so the client keeps a single idempotent "upsert a todo" path.
+  `completedAt` is a varchar ISO string (no pg-only date type → the SQLite
+  test DB and Postgres agree).
 - **SRP:** thin controllers, use cases in services, the gateway is pure
   websocket transport, repositories only persist.
 - DTOs validated globally (`class-validator` + `ValidationPipe`).
@@ -90,7 +101,8 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   `DB_SYNCHRONIZE` (default: on unless `NODE_ENV=production`) controls
   schema sync — **no migrations yet**. `DB_SSL` / `sslmode=require` → TLS.
 - The seeder (`database/seed/`) is idempotent: ensures the aisle catalogue
-  + one demo family ("The Sample Family": Alex, Sam, Robin) on boot.
+  + one demo family ("The Sample Family": Alex, Sam, Robin) and a few demo
+  to-dos (one already commented) on a fresh DB.
 - `GET /api/health` → liveness probe (Docker + Railway).
 - **Serves the SPA:** in production `ServeStaticModule` serves the built
   `frontend/dist` from the same server (history fallback; `/api` + `/socket.io`
@@ -99,9 +111,10 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   anonymously.
 
 ### Frontend — feature-sliced, fine-grained reactivity
-- `features/groceries`, `features/family`, `features/auth`; shared
-  `shared/ui`, `shared/layout`, `components/ui` (the solid-ui layer); routing
-  via `@solidjs/router`, bottom-nav already anticipates future views.
+- `features/groceries`, `features/todos`, `features/family`, `features/auth`;
+  shared `shared/ui`, `shared/layout`, `components/ui` (the solid-ui layer —
+  now incl. a `Textarea`); routing via `@solidjs/router`, bottom-nav has a
+  tab per view.
 - **Auth gate:** `AuthProvider` owns the bearer token (in `localStorage`) +
   signed-in user and renders `<LoginPage>` until authenticated. The token is
   injected into `lib/api/http.ts` (Bearer header) and the Socket.IO handshake
@@ -201,7 +214,7 @@ npm run test:e2e     # backend e2e — in-memory SQLite, no DB needed
 npm run build        # nest build + vite build
 ```
 
-Current baseline: typecheck ✅ · lint ✅ · unit 18+9 ✅ · e2e 15 ✅ · build ✅.
+Current baseline: typecheck ✅ · lint ✅ · unit 26+19 ✅ · e2e 21 ✅ · build ✅.
 e2e/test uses SQLite on purpose → entities avoid pg-only types (no native
 enum/jsonb; `status` is varchar). Backend lint = prettier-as-eslint; run
 `npm run format --workspace=@fireplace/backend` to auto-fix.
@@ -222,6 +235,7 @@ enum/jsonb; `status` is varchar). Backend lint = prettier-as-eslint; run
 ## 10. Roadmap
 
 - [x] Real-time collaborative grocery list (warm/cosy UI)
+- [x] Real-time to-do board — criticality + per-task comments, mobile-first
 - [x] Dockerised + Railway-ready
 - [x] Basic login gate (2 users in `.env`, JWT)
 - [x] Installable PWA (manifest + service worker, warm flame icon set)

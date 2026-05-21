@@ -68,3 +68,35 @@ export interface CreateItemInput {
   categoryId?: string;
   addedById: string;
 }
+
+export type TodoCriticality = 'low' | 'medium' | 'high';
+export type TodoStatus = 'open' | 'done';
+
+export interface TodoComment {
+  id: string;
+  todoId: string;
+  authorId: string;
+  author?: Member | null;
+  body: string;
+  createdAt: string;
+}
+
+export interface Todo {
+  id: string;
+  title: string;
+  description: string | null;
+  criticality: TodoCriticality;
+  status: TodoStatus;
+  familyId: string;
+  createdById: string;
+  completedById: string | null;
+  completedAt: string | null;
+  createdBy?: Member | null;
+  completedBy?: Member | null;
+  comments: TodoComment[];
+  createdAt: string;
+}
+
+export interface TodoSnapshot {
+  todos: Todo[];
+}

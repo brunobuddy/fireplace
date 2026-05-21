@@ -12,6 +12,14 @@ export const GROCERY_EVENTS = {
   CART_CLEARED: 'grocery:cart_cleared',
 } as const;
 
+/** To-do board events — must mirror the backend's `TODO_EVENTS`. */
+export const TODO_EVENTS = {
+  JOIN: 'todo:join',
+  TODO_ADDED: 'todo:added',
+  TODO_UPDATED: 'todo:updated',
+  TODO_REMOVED: 'todo:removed',
+} as const;
+
 let socket: Socket | null = null;
 
 /**
