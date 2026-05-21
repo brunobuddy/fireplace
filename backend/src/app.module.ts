@@ -4,6 +4,7 @@ import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { FamilyModule } from './family/family.module';
 import { GroceriesModule } from './groceries/groceries.module';
+import { TodosModule } from './todos/todos.module';
 
 /**
  * Composition root. Feature modules are independent and added here as the
@@ -16,6 +17,7 @@ import { GroceriesModule } from './groceries/groceries.module';
     HealthModule,
     FamilyModule,
     GroceriesModule,
+    TodosModule,
   ],
 })
 export class AppModule {}

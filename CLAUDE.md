@@ -17,6 +17,11 @@ scaffold was deliberately shaped so new views slot in without rework.
 together, run through at the supermarket, items checked off live across
 phones.
 
+**Feature 2 (done): a shared real-time to-do board** — each task carries a
+criticality (low / medium / high) and a live comment thread; every
+task and comment is stamped with the family member who created it. Built
+mobile-first — tap a task to expand it inline (accordion).
+
 ## 2. Stack
 
 | Layer    | Choice                                                    |
@@ -53,12 +58,18 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
 ## 4. Architecture
 
 ### Backend — SOLID, modular
-- Feature modules: `family/`, `groceries/`, `health/`; `database/` owns the
-  connection + bootstrap seeder. New domains are added to `app.module.ts`
-  without touching existing ones (OCP).
+- Feature modules: `family/`, `groceries/`, `todos/`, `health/`; `database/`
+  owns the connection + bootstrap seeder. New domains are added to
+  `app.module.ts` without touching existing ones (OCP).
 - **Dependency Inversion:** `GroceriesService` depends on the
   `IGroceryItemRepository` port (token + interface), bound to a TypeORM
   adapter in the module. Swap persistence / fake in tests = one line.
+- **Todos** reuse the same shape: an `ITodoRepository` port wraps the Todo
+  aggregate (task + its comments), a `TodosGateway` broadcasts to a
+  per-family room (`family-todos:<id>`), and comment add/remove re-emit the
+  whole todo so the client keeps a single idempotent "upsert a todo" path.
+  `completedAt` is a varchar ISO string (no pg-only date type → the SQLite
+  test DB and Postgres agree).
 - **SRP:** thin controllers, use cases in services, the gateway is pure
   websocket transport, repositories only persist.
 - DTOs validated globally (`class-validator` + `ValidationPipe`).
@@ -67,13 +78,15 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   `DB_SYNCHRONIZE` (default: on unless `NODE_ENV=production`) controls
   schema sync — **no migrations yet**. `DB_SSL` / `sslmode=require` → TLS.
 - The seeder (`database/seed/`) is idempotent: ensures the aisle catalogue
-  + one demo family ("The Sample Family": Alex, Sam, Robin) on boot.
+  + one demo family ("The Sample Family": Alex, Sam, Robin) and a few demo
+  to-dos (one already commented) on a fresh DB.
 - `GET /api/health` → liveness probe (Docker + Railway).
 
 ### Frontend — feature-sliced, fine-grained reactivity
-- `features/groceries`, `features/family`; shared `shared/ui`,
-  `shared/layout`, `components/ui` (the solid-ui layer); routing via
-  `@solidjs/router`, bottom-nav already anticipates future views.
+- `features/groceries`, `features/todos`, `features/family`; shared
+  `shared/ui`, `shared/layout`, `components/ui` (the solid-ui layer — now
+  incl. a `Textarea`); routing via `@solidjs/router`, bottom-nav has a tab
+  per view.
 - One `createStore` controller is the source of truth; pure list logic in
   `groceries.helpers.ts` is isolated and unit-tested.
 - **Runtime API URL:** resolved by `lib/runtime-config.ts` in order:
@@ -165,7 +178,7 @@ npm run test:e2e     # backend e2e — in-memory SQLite, no DB needed
 npm run build        # nest build + vite build
 ```
 
-Current baseline: typecheck ✅ · lint ✅ · unit 7+7 ✅ · e2e 6 ✅ · build ✅.
+Current baseline: typecheck ✅ · lint ✅ · unit 15+17 ✅ · e2e 11 ✅ · build ✅.
 e2e/test uses SQLite on purpose → entities avoid pg-only types (no native
 enum/jsonb; `status` is varchar). Backend lint = prettier-as-eslint; run
 `npm run format --workspace=@fireplace/backend` to auto-fix.
@@ -184,6 +197,7 @@ enum/jsonb; `status` is varchar). Backend lint = prettier-as-eslint; run
 ## 10. Roadmap
 
 - [x] Real-time collaborative grocery list (warm/cosy UI)
+- [x] Real-time to-do board — criticality + per-task comments, mobile-first
 - [x] Dockerised + Railway-ready
 - [ ] Family agenda / shared calendar
 - [ ] Family conversations
