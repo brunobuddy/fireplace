@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '../auth/auth.module';
 import { GroceryList } from './entities/grocery-list.entity';
 import { GroceryCategory } from './entities/grocery-category.entity';
 import { GroceryItem } from './entities/grocery-item.entity';
@@ -12,6 +13,7 @@ import { TypeOrmGroceryItemRepository } from './repositories/typeorm-grocery-ite
 @Module({
   imports: [
     TypeOrmModule.forFeature([GroceryList, GroceryCategory, GroceryItem]),
+    AuthModule,
   ],
   controllers: [GroceriesController],
   providers: [

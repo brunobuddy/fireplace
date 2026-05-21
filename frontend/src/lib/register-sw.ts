@@ -4,7 +4,7 @@
  *
  * Production only: in dev, Vite serves ES modules a service worker would
  * happily cache and then hand back stale. The worker itself lives at
- * `public/sw.js` and is careful never to cache `/env.js`.
+ * `public/sw.js` and is careful never to cache the same-origin `/api`.
  */
 export function registerServiceWorker(): void {
   if (!import.meta.env.PROD) return;

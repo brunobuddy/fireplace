@@ -1,6 +1,8 @@
 import { type Component, type JSX, For } from 'solid-js';
 import { A, useLocation } from '@solidjs/router';
 import { MemberSwitcher } from '@/features/family/components/MemberSwitcher';
+import { useAuth } from '@/features/auth/auth-context';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 
 const NAV = [
@@ -12,6 +14,7 @@ const NAV = [
 /** Persistent warm chrome shared by every family view. */
 export const AppShell: Component<{ children?: JSX.Element }> = (props) => {
   const location = useLocation();
+  const { logout } = useAuth();
 
   return (
     <div class="mx-auto flex min-h-full max-w-xl flex-col">
@@ -24,7 +27,31 @@ export const AppShell: Component<{ children?: JSX.Element }> = (props) => {
             Fireplace
           </span>
         </div>
-        <MemberSwitcher />
+        <div class="flex items-center gap-1.5">
+          <MemberSwitcher />
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-9 w-9 text-muted-foreground"
+            aria-label="Sign out"
+            onClick={() => logout()}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </Button>
+        </div>
       </header>
 
       <main class="flex-1 px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-4">
@@ -52,9 +79,7 @@ export const AppShell: Component<{ children?: JSX.Element }> = (props) => {
                 <span
                   class={cn(
                     'text-[1.4rem] transition-transform duration-150',
-                    active()
-                      ? '-translate-y-0.5 scale-110'
-                      : 'grayscale-[0.4]',
+                    active() ? '-translate-y-0.5 scale-110' : 'grayscale-[0.4]',
                   )}
                   aria-hidden="true"
                 >

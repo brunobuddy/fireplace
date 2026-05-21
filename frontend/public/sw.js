@@ -1,15 +1,14 @@
 /*
  * Fireplace service worker — minimal and hand-rolled (no Workbox) to keep the
- * build dependency-free and, above all, to NEVER cache /env.js, which the
- * container entrypoint rewrites at start (frontend/docker/30-fireplace-env.sh).
- * Caching it would pin a stale backend URL and break "deploy one image
- * anywhere".
+ * build dependency-free. The app is single-origin (NestJS serves the SPA *and*
+ * the API), so the worker must explicitly skip the API + websocket: they now
+ * share the page's origin and must never be cached.
  *
  * Strategy:
- *   - navigations        -> network-first, fall back to the cached shell offline
- *   - /assets/* (hashed) -> cache-first (filenames change every build)
- *   - other same-origin  -> stale-while-revalidate (icons, manifest, favicons)
- *   - cross-origin / API / sockets / env.js -> untouched (straight to network)
+ *   - navigations            -> network-first, fall back to the cached shell offline
+ *   - /assets/* (hashed)     -> cache-first (filenames change every build)
+ *   - other same-origin      -> stale-while-revalidate (icons, manifest, favicons)
+ *   - /api, /socket.io, x-origin -> untouched (straight to network)
  *
  * Bump CACHE to force every client to drop old entries on the next visit.
  */
@@ -52,8 +51,11 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return; // backend API, sockets, CDNs
-  if (url.pathname === '/env.js' || url.pathname === '/sw.js') return;
+  if (url.origin !== self.location.origin) return; // cross-origin (CDNs, etc.)
+  if (url.pathname === '/sw.js') return;
+  // Same-origin now includes the API + websocket — never cache those.
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io/'))
+    return;
 
   if (request.mode === 'navigate') {
     event.respondWith(

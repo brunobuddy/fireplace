@@ -2,6 +2,11 @@
  * Domain types mirrored from the backend API contract. Kept in one place so
  * the store, components and socket handlers all speak the same shape.
  */
+/** The signed-in app user (login gate — distinct from the member switcher). */
+export interface AuthUser {
+  email: string;
+}
+
 export type MemberRole = 'parent' | 'child';
 
 export interface Member {

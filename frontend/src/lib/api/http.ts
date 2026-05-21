@@ -1,12 +1,11 @@
-import { resolveApiUrl } from '../runtime-config';
+import { getAuthToken, notifyUnauthorized } from './auth-token';
 
 /**
- * Minimal typed fetch wrapper. Single source of truth for the API base URL
- * and error handling, so feature API modules stay one-liners.
+ * Minimal typed fetch wrapper. The API is same-origin — NestJS serves the SPA
+ * in production and Vite proxies `/api` in dev — so the base is a relative
+ * path and no CORS is involved. Feature API modules stay one-liners.
  */
-export const API_URL = resolveApiUrl();
-
-const BASE = `${API_URL}/api`;
+const BASE = '/api';
 
 export class ApiError extends Error {
   constructor(
@@ -19,10 +18,21 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getAuthToken();
   const res = await fetch(`${BASE}${path}`, {
     ...init,
-    headers: { 'Content-Type': 'application/json', ...init.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init.headers,
+    },
   });
+
+  // A 401 while we held a token means it expired/was revoked → end the
+  // session. A 401 without a token (e.g. a failed login) just surfaces below.
+  if (res.status === 401 && token) {
+    notifyUnauthorized();
+  }
 
   if (!res.ok) {
     const detail = await res.text().catch(() => res.statusText);
