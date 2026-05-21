@@ -6,6 +6,7 @@ import '@fontsource/baloo-2/latin-800.css';
 import './app.css';
 import { render } from 'solid-js/web';
 import { App } from './App';
+import { registerServiceWorker } from './lib/register-sw';
 
 const root = document.getElementById('root');
 
@@ -14,3 +15,5 @@ if (!root) {
 }
 
 render(() => <App />, root);
+
+registerServiceWorker();

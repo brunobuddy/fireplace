@@ -1,9 +1,10 @@
 # syntax=docker/dockerfile:1
+# Single service: NestJS serves the API *and* the built SPA on one port.
 # Build context = repo root (npm-workspaces monorepo). Alpine is safe here:
-# `--ignore-scripts` means no native build at install time, and every backend
-# *production* dependency is pure JS (pg, nestjs, typeorm, socket.io…).
+# `--ignore-scripts` means no native build at install, and every backend
+# *production* dependency is pure JS (pg, nestjs, serve-static, socket.io…).
 
-# ---- builder: full install + compile -------------------------------------
+# ---- builder: full install + compile backend & frontend -------------------
 FROM node:22-alpine AS builder
 WORKDIR /app
 ENV NODE_ENV=development
@@ -15,15 +16,17 @@ COPY frontend/package.json frontend/package.json
 # --ignore-scripts: skip the root "prepare"→husky hook (dev-only, absent here).
 RUN npm ci --ignore-scripts
 
-# Source + build (changes often → after the cached deps layer).
+# Source + build both workspaces (changes often → after the cached deps layer).
 COPY backend ./backend
-RUN npm run build --workspace=@fireplace/backend
+COPY frontend ./frontend
+RUN npm run build
 
-# ---- runtime: backend production deps only, non-root ---------------------
+# ---- runtime: backend prod deps + the static SPA, non-root ----------------
 FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production \
-    PORT=3000
+    PORT=3000 \
+    FRONTEND_DIST=/app/frontend/dist
 
 COPY package.json package-lock.json ./
 COPY backend/package.json backend/package.json
@@ -33,7 +36,9 @@ COPY frontend/package.json frontend/package.json
 RUN npm ci --omit=dev --ignore-scripts --workspace=@fireplace/backend \
     && npm cache clean --force
 
+# Compiled API + the static SPA it serves (NestJS ServeStaticModule).
 COPY --from=builder /app/backend/dist ./backend/dist
+COPY --from=builder /app/frontend/dist ./frontend/dist
 
 USER node
 EXPOSE 3000

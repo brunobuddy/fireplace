@@ -8,13 +8,26 @@
     />
     <meta name="theme-color" content="#f3e9d8" />
     <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#2e2119"
+    />
+    <meta
       name="description"
       content="Fireplace — the shared home for your family. Groceries, agendas and more."
     />
     <title>Fireplace · Family</title>
-    <!-- Runtime config: overwritten by the container entrypoint from $API_URL.
-         Must load before the app module. -->
-    <script src="/env.js"></script>
+
+    <!-- PWA: installable app shell + icons + Apple/Android metadata. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <meta name="application-name" content="Fireplace" />
+    <meta name="apple-mobile-web-app-title" content="Fireplace" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   </head>
   <body>
     <div id="root"></div>

@@ -1,9 +1,9 @@
 # Two ways to use this file:
-#   • `npm run db:up`          → just Postgres (local dev DB; no profile)
-#   • `npm run app:up`         → full containerised stack (profile: app)
+#   • `npm run db:up`   → just Postgres (local dev DB; no profile)
+#   • `npm run app:up`  → the full app (one service: API + SPA) + Postgres
 #
-# Host ports are overridable so they don't collide with anything already
-# bound on the machine (e.g. POSTGRES_HOST_PORT, API_HOST_PORT, WEB_HOST_PORT).
+# The app is a SINGLE service — NestJS serves the SPA and the API on one
+# port. Override the host port with APP_HOST_PORT to avoid collisions.
 
 services:
   postgres:
@@ -24,12 +24,12 @@ services:
       timeout: 5s
       retries: 10
 
-  backend:
+  app:
     profiles: ["app"]
     build:
       context: .
       dockerfile: backend/Dockerfile
-    image: fireplace-backend
+    image: fireplace-app
     restart: unless-stopped
     depends_on:
       postgres:
@@ -43,27 +43,13 @@ services:
       DB_USERNAME: fireplace
       DB_PASSWORD: fireplace
       DB_NAME: fireplace
-      # The browser reaches the API on the host, so CORS must allow the
-      # host-facing web origin (not the compose-internal hostname).
-      CORS_ORIGINS: "http://localhost:${WEB_HOST_PORT:-8080}"
+      # Login gate. NODE_ENV=production here, so both MUST be set or the app
+      # refuses to boot. Demo values — override for anything real.
+      AUTH_USERS: "alex@fireplace.app:fireplace,sam@fireplace.app:fireplace"
+      JWT_SECRET: "local-compose-dev-secret-change-me"
+      JWT_EXPIRES_IN: "7d"
     ports:
-      - "${API_HOST_PORT:-3000}:3000"
-
-  frontend:
-    profiles: ["app"]
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    image: fireplace-frontend
-    restart: unless-stopped
-    depends_on:
-      - backend
-    environment:
-      PORT: 8080
-      # Injected into /env.js at start. Browser-facing → host URL of the API.
-      API_URL: "http://localhost:${API_HOST_PORT:-3000}"
-    ports:
-      - "${WEB_HOST_PORT:-8080}:8080"
+      - "${APP_HOST_PORT:-3000}:3000"
 
 volumes:
   fireplace-pgdata:

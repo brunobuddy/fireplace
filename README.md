@@ -32,8 +32,13 @@ npm install
 npm run dev
 ```
 
-The API seeds a demo family ("The Sample Family" with Alex, Sam, Robin) and
-the aisle catalogue on first boot, so the app is usable immediately. Pick a
+The app is gated by a login. With no `AUTH_USERS` configured, local dev falls
+back to an insecure demo account — **demo@fireplace.app** / **demo** — so you
+can sign in immediately (set `AUTH_USERS` + `JWT_SECRET` in `.env` for real
+credentials; see `.env.example`).
+
+After signing in, the API seeds a demo family ("The Sample Family" with Alex,
+Sam, Robin) and the aisle catalogue, so the app is usable right away. Pick a
 profile from the header switcher and start adding items — open a second
 browser to watch it sync live.
 
@@ -79,6 +84,7 @@ Copy `.env.example` to `.env` to change ports/credentials.
 ## Roadmap
 
 - [x] Real-time collaborative grocery list
+- [x] Basic login gate (2 users in `.env`, JWT)
 - [ ] Family agenda / shared calendar
 - [ ] Family conversations
-- [ ] Real authentication (the data model is already family-scoped)
+- [ ] Real per-user authentication (the data model is already family-scoped)
