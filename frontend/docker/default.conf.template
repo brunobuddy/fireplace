@@ -8,11 +8,20 @@ server {
 
     gzip            on;
     gzip_min_length 1024;
-    gzip_types      text/css application/javascript application/json image/svg+xml;
+    gzip_types      text/css application/javascript application/json application/manifest+json image/svg+xml;
 
     # The shell and runtime config must never be cached.
     location = /index.html { add_header Cache-Control "no-store"; }
     location = /env.js     { add_header Cache-Control "no-store"; }
+
+    # The service worker must update promptly — never cache it.
+    location = /sw.js      { add_header Cache-Control "no-cache"; }
+
+    # The web app manifest needs the right MIME type to install cleanly.
+    location = /manifest.webmanifest {
+        default_type application/manifest+json;
+        add_header   Cache-Control "no-cache";
+    }
 
     # Content-hashed build assets — cache hard.
     location /assets/ {
