@@ -35,13 +35,42 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
 
   if (!res.ok) {
-    const detail = await res.text().catch(() => res.statusText);
-    throw new ApiError(res.status, detail || `Request failed (${res.status})`);
+    throw new ApiError(res.status, await readErrorMessage(res));
   }
   if (res.status === 204) {
     return undefined as T;
   }
   return res.json() as Promise<T>;
+}
+
+/**
+ * Turn an error response into a human-readable message. NestJS sends
+ * `{ statusCode, message, error }`, where `message` is a string or (for
+ * validation failures) an array — unwrap that so the UI shows a clean line
+ * instead of raw JSON; otherwise fall back to the body, status text, or a
+ * generic message.
+ */
+async function readErrorMessage(res: Response): Promise<string> {
+  const fallback = `Request failed (${res.status})`;
+  const raw = await res.text().catch(() => '');
+  if (!raw) {
+    return res.statusText || fallback;
+  }
+  try {
+    const body = JSON.parse(raw) as { message?: unknown; error?: unknown };
+    if (Array.isArray(body.message)) {
+      return body.message.join(', ');
+    }
+    if (typeof body.message === 'string' && body.message) {
+      return body.message;
+    }
+    if (typeof body.error === 'string' && body.error) {
+      return body.error;
+    }
+  } catch {
+    // Body wasn't JSON — fall through to the raw text.
+  }
+  return raw || res.statusText || fallback;
 }
 
 export const http = {

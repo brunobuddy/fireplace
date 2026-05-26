@@ -18,7 +18,7 @@ export const CommentThread: Component<Props> = (props) => {
       when={comments().length > 0}
       fallback={
         <div class="flex flex-col items-center gap-1 py-8 text-center">
-          <div class="animate-float text-4xl" aria-hidden="true">
+          <div class="text-4xl" aria-hidden="true">
             💬
           </div>
           <p class="text-sm font-bold">No comments yet</p>

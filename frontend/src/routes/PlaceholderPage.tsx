@@ -5,7 +5,7 @@ export const PlaceholderPage: Component<{ title: string; icon: string }> = (
   props,
 ) => (
   <div class="flex flex-col items-center px-6 py-16 text-center">
-    <div class="mb-3 animate-float text-6xl" aria-hidden="true">
+    <div class="mb-3 text-6xl" aria-hidden="true">
       {props.icon}
     </div>
     <h1 class="font-display text-xl font-extrabold">{props.title}</h1>

@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
@@ -9,6 +10,7 @@ import { HealthModule } from './health/health.module';
 import { FamilyModule } from './family/family.module';
 import { GroceriesModule } from './groceries/groceries.module';
 import { TodosModule } from './todos/todos.module';
+import { SparkModule } from './spark/spark.module';
 
 /**
  * Composition root. Feature modules are independent and added here as the
@@ -24,12 +26,14 @@ import { TodosModule } from './todos/todos.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     AuthModule,
     HealthModule,
     FamilyModule,
     GroceriesModule,
     TodosModule,
+    SparkModule,
     ...spaModule(),
   ],
 })

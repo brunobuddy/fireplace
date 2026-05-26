@@ -16,19 +16,14 @@ export function Card(props: ComponentProps<'div'>) {
 
 export function CardHeader(props: ComponentProps<'div'>) {
   const [local, rest] = splitProps(props, ['class']);
-  return (
-    <div class={cn('flex flex-col gap-1 p-5', local.class)} {...rest} />
-  );
+  return <div class={cn('flex flex-col gap-1 p-5', local.class)} {...rest} />;
 }
 
 export function CardTitle(props: ComponentProps<'h2'>) {
   const [local, rest] = splitProps(props, ['class']);
   return (
     <h2
-      class={cn(
-        'font-display text-lg font-bold tracking-tight',
-        local.class,
-      )}
+      class={cn('font-display text-lg font-bold tracking-tight', local.class)}
       {...rest}
     />
   );

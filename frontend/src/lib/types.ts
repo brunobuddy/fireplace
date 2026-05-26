@@ -100,3 +100,31 @@ export interface Todo {
 export interface TodoSnapshot {
   todos: Todo[];
 }
+
+// ── Spark (daily two-parent bonding question) ─────────────────────────────
+export interface SparkQuestionView {
+  id: string;
+  text: string;
+  createdAt: string;
+}
+
+export interface SparkParticipantView {
+  memberId: string;
+  name: string;
+  color: string;
+  hasAnswered: boolean;
+  answeredAt: string | null;
+  /** Redacted to null unless it's the viewer's own answer, or both have answered. */
+  text: string | null;
+  isViewer: boolean;
+}
+
+export interface SparkView {
+  question: SparkQuestionView | null;
+  participants: SparkParticipantView[];
+  /** Both parents have answered → both texts are visible. */
+  revealed: boolean;
+  /** Is the viewer one of the two parents (allowed to answer)? */
+  viewerIsParticipant: boolean;
+  viewerHasAnswered: boolean;
+}
