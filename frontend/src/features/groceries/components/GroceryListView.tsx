@@ -1,6 +1,7 @@
 import { type Component, For, Show } from 'solid-js';
 import { useFamily } from '@/features/family/family-context';
 import { Spinner } from '@/shared/ui/Spinner';
+import { ErrorToast } from '@/shared/ui/ErrorToast';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { createGroceriesController } from '../store/groceries-store';
@@ -40,6 +41,10 @@ export const GroceryListView: Component = () => {
         <AddItemBar
           categories={ctrl.state.categories}
           onAdd={(input) => void ctrl.actions.addItem(input)}
+        />
+        <ErrorToast
+          message={ctrl.state.error}
+          onDismiss={() => ctrl.actions.clearError()}
         />
 
         <Show when={total() > 0}>

@@ -20,9 +20,7 @@ export const MemberSwitcher: Component = () => {
       >
         <Show
           when={currentMember()}
-          fallback={
-            <span class="px-2 text-sm font-bold">Choose profile</span>
-          }
+          fallback={<span class="px-2 text-sm font-bold">Choose profile</span>}
         >
           {(m) => (
             <>

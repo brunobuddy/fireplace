@@ -51,7 +51,8 @@ export const GroceryItemRow: Component<Props> = (props) => {
           <span
             class={cn(
               'flex items-baseline gap-2 font-bold',
-              done() && 'text-muted-foreground line-through decoration-muted-foreground/60',
+              done() &&
+                'text-muted-foreground line-through decoration-muted-foreground/60',
             )}
           >
             {props.item.name}

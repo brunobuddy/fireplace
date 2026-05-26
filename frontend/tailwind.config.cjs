@@ -74,10 +74,6 @@ module.exports = {
           from: { opacity: '0', transform: 'scale(0.92)' },
           to: { opacity: '1', transform: 'scale(1)' },
         },
-        float: {
-          '0%,100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-7px)' },
-        },
         'content-show': {
           from: { opacity: '0', transform: 'scale(0.96) translateY(-6px)' },
           to: { opacity: '1', transform: 'scale(1) translateY(0)' },
@@ -86,7 +82,6 @@ module.exports = {
       animation: {
         'fade-in-up': 'fade-in-up 0.25s cubic-bezier(0.22,1,0.36,1)',
         'pop-in': 'pop-in 0.3s cubic-bezier(0.22,1,0.36,1)',
-        float: 'float 3.5s ease-in-out infinite',
         'content-show': 'content-show 0.16s cubic-bezier(0.22,1,0.36,1)',
       },
     },

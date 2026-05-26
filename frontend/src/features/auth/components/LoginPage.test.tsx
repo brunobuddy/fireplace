@@ -15,7 +15,9 @@ describe('<LoginPage>', () => {
     login.mockResolvedValue(undefined);
     const { getByLabelText, getByRole } = render(() => <LoginPage />);
 
-    fireEvent.input(getByLabelText('Email'), { target: { value: '  a@x.io ' } });
+    fireEvent.input(getByLabelText('Email'), {
+      target: { value: '  a@x.io ' },
+    });
     fireEvent.input(getByLabelText('Password'), { target: { value: 'pw' } });
     fireEvent.click(getByRole('button', { name: /sign in/i }));
 
@@ -26,7 +28,9 @@ describe('<LoginPage>', () => {
   it('shows an error message when login fails', async () => {
     login.mockReset();
     login.mockRejectedValue(new Error('bad credentials'));
-    const { getByLabelText, getByRole, findByRole } = render(() => <LoginPage />);
+    const { getByLabelText, getByRole, findByRole } = render(() => (
+      <LoginPage />
+    ));
 
     fireEvent.input(getByLabelText('Email'), { target: { value: 'a@x.io' } });
     fireEvent.input(getByLabelText('Password'), { target: { value: 'wrong' } });

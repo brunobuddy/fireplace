@@ -20,6 +20,14 @@ export const TODO_EVENTS = {
   TODO_REMOVED: 'todo:removed',
 } as const;
 
+/** Spark events — must mirror the backend's `SPARK_EVENTS`. Neither broadcast
+ *  carries answer text, so secrecy holds over the wire. */
+export const SPARK_EVENTS = {
+  JOIN: 'spark:join',
+  UPDATED: 'spark:updated',
+  QUESTION: 'spark:question',
+} as const;
+
 let socket: Socket | null = null;
 
 /**

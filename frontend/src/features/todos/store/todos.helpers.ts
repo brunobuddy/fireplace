@@ -43,7 +43,9 @@ export const doneTodos = (todos: Todo[]): Todo[] =>
   todos
     .filter((t) => t.status === 'done')
     .sort((a, b) =>
-      (b.completedAt ?? b.createdAt).localeCompare(a.completedAt ?? a.createdAt),
+      (b.completedAt ?? b.createdAt).localeCompare(
+        a.completedAt ?? a.createdAt,
+      ),
     );
 
 export const commentCount = (todo: Todo): number => todo.comments?.length ?? 0;

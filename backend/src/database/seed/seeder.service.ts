@@ -7,6 +7,7 @@ import { GroceryList } from '../../groceries/entities/grocery-list.entity';
 import { GroceryCategory } from '../../groceries/entities/grocery-category.entity';
 import { Todo } from '../../todos/entities/todo.entity';
 import { TodoComment } from '../../todos/entities/todo-comment.entity';
+import { SparkQuestion } from '../../spark/entities/spark-question.entity';
 import { CATEGORY_SEED } from './categories.seed';
 
 /**
@@ -31,6 +32,8 @@ export class SeederService implements OnApplicationBootstrap {
     private readonly todos: Repository<Todo>,
     @InjectRepository(TodoComment)
     private readonly todoComments: Repository<TodoComment>,
+    @InjectRepository(SparkQuestion)
+    private readonly sparkQuestions: Repository<SparkQuestion>,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -80,7 +83,24 @@ export class SeederService implements OnApplicationBootstrap {
       this.lists.create({ familyId: family.id, name: 'Shopping list' }),
     );
     await this.seedDemoTodos(family, members);
+    await this.seedDemoSpark(family);
     this.logger.log(`Seeded demo family "${family.name}" (${family.id})`);
+  }
+
+  /**
+   * One starter Spark question so the page works the moment the app boots —
+   * before any OpenAI call. Marked `source: 'seed'`; the next rollover (cron or
+   * the "✨ New question" button) replaces it with a generated one.
+   */
+  private async seedDemoSpark(family: Family): Promise<void> {
+    await this.sparkQuestions.save(
+      this.sparkQuestions.create({
+        familyId: family.id,
+        text: 'If we could plan one tiny adventure together this month, what would you want it to be?',
+        status: 'active',
+        source: 'seed',
+      }),
+    );
   }
 
   /** A handful of starter to-dos so the board has something to show. */

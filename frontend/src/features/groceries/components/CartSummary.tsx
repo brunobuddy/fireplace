@@ -52,11 +52,7 @@ export const CartSummary: Component<Props> = (props) => {
               ▾
             </span>
           </button>
-          <Button
-            size="pill"
-            variant="accent"
-            onClick={() => props.onClear()}
-          >
+          <Button size="pill" variant="accent" onClick={() => props.onClear()}>
             Clear basket
           </Button>
         </div>

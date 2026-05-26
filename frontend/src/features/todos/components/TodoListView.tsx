@@ -1,6 +1,7 @@
 import { type Component, For, Show, createSignal } from 'solid-js';
 import { useFamily } from '@/features/family/family-context';
 import { Spinner } from '@/shared/ui/Spinner';
+import { ErrorToast } from '@/shared/ui/ErrorToast';
 import { Button } from '@/components/ui/button';
 import {
   type TodoItemActions,
@@ -47,11 +48,17 @@ export const TodoListView: Component = () => {
         fallback={
           <div class="flex flex-col items-center gap-3 px-4 py-16 text-center">
             <p class="font-semibold text-destructive">{ctrl.state.error}</p>
-            <Button onClick={() => void ctrl.actions.reload()}>Try again</Button>
+            <Button onClick={() => void ctrl.actions.reload()}>
+              Try again
+            </Button>
           </div>
         }
       >
         <AddTodoBar onAdd={(input) => void ctrl.actions.addTodo(input)} />
+        <ErrorToast
+          message={ctrl.state.error}
+          onDismiss={() => ctrl.actions.clearError()}
+        />
 
         <Show when={hasAny()} fallback={<EmptyTodos />}>
           <For each={ctrl.groups()}>
@@ -89,7 +96,7 @@ export const TodoListView: Component = () => {
 
 const EmptyTodos: Component = () => (
   <div class="flex flex-col items-center px-6 py-14 text-center">
-    <div class="mb-3 animate-float text-6xl" aria-hidden="true">
+    <div class="mb-3 text-6xl" aria-hidden="true">
       📝
     </div>
     <h2 class="font-display text-lg font-extrabold">Nothing to do… for now</h2>

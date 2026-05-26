@@ -5,12 +5,12 @@ import { cn } from '@/lib/cn';
 /** Kobalte TextField root — owns value/label wiring + a11y. */
 export function TextField(props: ComponentProps<typeof KTextField>) {
   const [local, rest] = splitProps(props, ['class']);
-  return <KTextField class={cn('flex flex-col gap-1.5', local.class)} {...rest} />;
+  return (
+    <KTextField class={cn('flex flex-col gap-1.5', local.class)} {...rest} />
+  );
 }
 
-export function TextFieldInput(
-  props: ComponentProps<typeof KTextField.Input>,
-) {
+export function TextFieldInput(props: ComponentProps<typeof KTextField.Input>) {
   const [local, rest] = splitProps(props, ['class']);
   return (
     <KTextField.Input
@@ -27,9 +27,7 @@ export function TextFieldInput(
   );
 }
 
-export function TextFieldLabel(
-  props: ComponentProps<typeof KTextField.Label>,
-) {
+export function TextFieldLabel(props: ComponentProps<typeof KTextField.Label>) {
   const [local, rest] = splitProps(props, ['class']);
   return (
     <KTextField.Label
