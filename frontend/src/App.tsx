@@ -6,6 +6,7 @@ import { FamilyProvider } from '@/features/family/family-context';
 import { AppShell } from '@/shared/layout/AppShell';
 import { GroceryListView } from '@/features/groceries/components/GroceryListView';
 import { TodoListView } from '@/features/todos/components/TodoListView';
+import { SparkView } from '@/features/spark/components/SparkView';
 import { PlaceholderPage } from '@/routes/PlaceholderPage';
 
 /** Persistent chrome wrapping every routed family view. */
@@ -20,6 +21,7 @@ const AuthenticatedApp: Component = () => (
       <Route path="/" component={() => <Navigate href="/groceries" />} />
       <Route path="/groceries" component={GroceryListView} />
       <Route path="/todos" component={TodoListView} />
+      <Route path="/spark" component={SparkView} />
       <Route
         path="/agenda"
         component={() => <PlaceholderPage title="Agenda" icon="📅" />}

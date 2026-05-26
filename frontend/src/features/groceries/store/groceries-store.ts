@@ -1,4 +1,11 @@
-import { type Accessor, createMemo, onCleanup, onMount } from 'solid-js';
+import {
+  type Accessor,
+  createEffect,
+  createMemo,
+  on,
+  onCleanup,
+  onMount,
+} from 'solid-js';
 import { createStore } from 'solid-js/store';
 import type { GroceryCategory, GroceryItem, Member } from '@/lib/types';
 import { GROCERY_EVENTS, getSocket } from '@/lib/socket/socket';
@@ -88,7 +95,6 @@ export function createGroceriesController(
     socket.on(GROCERY_EVENTS.ITEM_UPDATED, onUpdated);
     socket.on(GROCERY_EVENTS.ITEM_REMOVED, onRemoved);
     socket.on(GROCERY_EVENTS.CART_CLEARED, onCleared);
-    void reload();
   });
 
   onCleanup(() => {
@@ -97,6 +103,12 @@ export function createGroceriesController(
     socket.off(GROCERY_EVENTS.ITEM_REMOVED, onRemoved);
     socket.off(GROCERY_EVENTS.CART_CLEARED, onCleared);
   });
+
+  // Load once the family resolves. The family resource is usually still
+  // in-flight when this view mounts, so a one-shot reload in onMount would bail
+  // on an undefined id and never retry (the page would hang on the spinner).
+  // An effect re-runs the moment familyId becomes available.
+  createEffect(on(familyId, () => void reload()));
 
   // ---- mutations (optimistic) ------------------------------------------
   async function addItem(input: QuickAddInput): Promise<void> {
@@ -168,12 +180,16 @@ export function createGroceriesController(
   const cart = createMemo(() => doneItems(state.items));
   const remaining = createMemo(() => pendingCount(state.items));
 
+  function clearError(): void {
+    setState('error', null);
+  }
+
   return {
     state,
     groups,
     cart,
     remaining,
-    actions: { addItem, toggle, remove, clearCart, reload },
+    actions: { addItem, toggle, remove, clearCart, reload, clearError },
   };
 }
 

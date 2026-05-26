@@ -57,7 +57,10 @@ export const AddItemBar: Component<Props> = (props) => {
           >
             −
           </button>
-          <span class="min-w-[1.1rem] text-center text-sm font-extrabold" aria-live="polite">
+          <span
+            class="min-w-[1.1rem] text-center text-sm font-extrabold"
+            aria-live="polite"
+          >
             {qty()}
           </span>
           <button

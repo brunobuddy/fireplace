@@ -1,4 +1,11 @@
-import { type Accessor, createMemo, onCleanup, onMount } from 'solid-js';
+import {
+  type Accessor,
+  createEffect,
+  createMemo,
+  on,
+  onCleanup,
+  onMount,
+} from 'solid-js';
 import { createStore } from 'solid-js/store';
 import type { Member, Todo, TodoComment, TodoCriticality } from '@/lib/types';
 import { TODO_EVENTS, getSocket } from '@/lib/socket/socket';
@@ -90,7 +97,6 @@ export function createTodosController(
     socket.on(TODO_EVENTS.TODO_ADDED, onAdded);
     socket.on(TODO_EVENTS.TODO_UPDATED, onUpdated);
     socket.on(TODO_EVENTS.TODO_REMOVED, onRemoved);
-    void reload();
   });
 
   onCleanup(() => {
@@ -98,6 +104,12 @@ export function createTodosController(
     socket.off(TODO_EVENTS.TODO_UPDATED, onUpdated);
     socket.off(TODO_EVENTS.TODO_REMOVED, onRemoved);
   });
+
+  // Load once the family resolves. The family resource is usually still
+  // in-flight when this view mounts, so a one-shot reload in onMount would bail
+  // on an undefined id and never retry (the page would hang on the spinner).
+  // An effect re-runs the moment familyId becomes available.
+  createEffect(on(familyId, () => void reload()));
 
   // ---- mutations (optimistic) ------------------------------------------
   async function addTodo(input: QuickAddTodoInput): Promise<void> {
@@ -166,7 +178,9 @@ export function createTodosController(
     const me = member();
     if (!me) return;
     const temp = optimisticComment(todo.id, me, body);
-    setTodos(upsert(state.todos, { ...todo, comments: [...todo.comments, temp] }));
+    setTodos(
+      upsert(state.todos, { ...todo, comments: [...todo.comments, temp] }),
+    );
     try {
       const saved = await todosApi.addComment(todo.id, {
         authorId: me.id,
@@ -202,6 +216,10 @@ export function createTodosController(
   const findById = (id: string): Todo | undefined =>
     state.todos.find((t) => t.id === id);
 
+  function clearError(): void {
+    setState('error', null);
+  }
+
   return {
     state,
     groups,
@@ -216,6 +234,7 @@ export function createTodosController(
       addComment,
       removeComment,
       reload,
+      clearError,
     },
   };
 }

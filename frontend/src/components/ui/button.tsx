@@ -16,11 +16,11 @@ export const buttonVariants = cva(
         secondary:
           'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'hover:bg-muted text-foreground',
-        outline:
-          'border border-border bg-card hover:bg-muted text-foreground',
+        outline: 'border border-border bg-card hover:bg-muted text-foreground',
         destructive:
           'bg-destructive text-destructive-foreground hover:brightness-105',
-        accent: 'bg-accent text-accent-foreground shadow-cosy hover:brightness-105',
+        accent:
+          'bg-accent text-accent-foreground shadow-cosy hover:brightness-105',
       },
       size: {
         default: 'h-11 px-5 text-sm',

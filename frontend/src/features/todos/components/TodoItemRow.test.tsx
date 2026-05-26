@@ -23,7 +23,13 @@ const base: Todo = {
   },
   completedBy: null,
   comments: [
-    { id: 'c1', todoId: 'a', authorId: 'm', body: 'hi', createdAt: '2026-01-01' },
+    {
+      id: 'c1',
+      todoId: 'a',
+      authorId: 'm',
+      body: 'hi',
+      createdAt: '2026-01-01',
+    },
   ],
   createdAt: '2026-01-01',
 };
