@@ -56,6 +56,19 @@ Copy `.env.example` to `.env` to change ports/credentials.
 | `npm run lint`        | ESLint across both workspaces                  |
 | `npm run build`       | Production build of both workspaces            |
 
+## Deploy
+
+Production is a **single Docker image** — NestJS serves the API and the built
+SPA on one port (no second service, no CORS).
+
+```bash
+npm run app:up      # Postgres + the app via docker-compose (prod-like, local)
+```
+
+For **Railway**: one app service + a Postgres plugin. Build/deploy config is
+auto-detected from `railway.toml`, and `deploy/railway-setup.sh` sets the
+secrets for you in one command. Step-by-step: [`deploy/RAILWAY.md`](deploy/RAILWAY.md).
+
 ## Architecture
 
 ### Backend (`backend/`) — NestJS, SOLID

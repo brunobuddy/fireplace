@@ -200,15 +200,19 @@ Non-root (`node`), `node backend/dist/main.js`, healthcheck `/api/health`.
 
 ## 7. Railway deployment
 
-**One service** deploys the whole app (config-as-code in `deploy/railway.json`).
+**One service** deploys the whole app. Build/deploy config is **config-as-code
+at the repo root** (`railway.toml`) — Railway auto-detects it, so there's no
+config path to set in the dashboard. Full walkthrough: `deploy/RAILWAY.md`.
 
-1. **Add a Postgres** (Railway plugin).
-2. **App service** — config path `deploy/railway.json` (Dockerfile
-   `backend/Dockerfile`, healthcheck `/api/health`). Env:
-   - `DATABASE_URL = ${{Postgres.DATABASE_URL}}`
-   - `DB_SYNCHRONIZE = true`  (no migrations yet — needed on first deploy)
-   - `DB_SSL = true`  (managed Postgres)
-   - `NODE_ENV = production`
+1. **Create the project + add a Postgres** (Railway plugin).
+2. **Connect this repo** as the app service — Railway reads `railway.toml`
+   (Dockerfile `backend/Dockerfile`, healthcheck `/api/health`).
+3. **Set the env vars** with `deploy/railway-setup.sh` (generates `JWT_SECRET`,
+   bcrypt-hashes passwords, wires `DATABASE_URL`, sets `DB_SYNCHRONIZE=true`),
+   or by hand:
+   - `DATABASE_URL = ${{Postgres.DATABASE_URL}}`  (Railway **private** URL)
+   - `DB_SYNCHRONIZE = true`  (no migrations yet — needed on first deploy;
+     flip to `false` afterwards)
    - `AUTH_USERS = email:secret,email:secret`  (bcrypt hashes recommended;
      `npm run auth:hash --workspace=backend -- 'pw'`)
    - `JWT_SECRET = <long random string>`  (**required** — app won't boot
@@ -218,7 +222,11 @@ Non-root (`node`), `node backend/dist/main.js`, healthcheck `/api/health`.
      "✨ New question" button + daily cron; no static fallback. The app still
      boots and shows the seeded question without it.)
    - `OPENAI_MODEL = gpt-4o-mini`  (optional; any Chat Completions model)
-   - `PORT` is provided by Railway.
+   - **Don't set `DB_SSL`** with the private `DATABASE_URL` — that network has
+     no TLS and forcing it fails with "server does not support SSL". Set
+     `DB_SSL=true` only if you switch to the public URL (`DATABASE_PUBLIC_URL`).
+   - `NODE_ENV=production` (baked into the image) and `PORT` (injected by
+     Railway) are already handled.
 
 The SPA is baked into the image and served same-origin, so there's no
 `API_URL` / `CORS_ORIGINS` to set — and no second service.
