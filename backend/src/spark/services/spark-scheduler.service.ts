@@ -4,11 +4,11 @@ import { SparkService } from './spark.service';
 
 /**
  * Once a day, roll any fully-answered Spark question over to a fresh one (a new
- * OpenAI call). Families still waiting on a parent keep today's question. Kept
- * separate from SparkService so the cron wiring stays out of the domain logic
- * (SRP); the manual "✨ New question" button hits the same service path on
- * demand. If OPENAI_API_KEY is unset the generation throws and is logged — the
- * cron never crashes the app.
+ * Manifest call). Families still waiting on a parent keep today's question.
+ * Kept separate from SparkService so the cron wiring stays out of the domain
+ * logic (SRP); the manual "✨ New question" button hits the same service path
+ * on demand. If MANIFEST_API_KEY is unset the generation throws and is
+ * logged — the cron never crashes the app.
  */
 @Injectable()
 export class SparkScheduler {

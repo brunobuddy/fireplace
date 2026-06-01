@@ -13,13 +13,13 @@ import { SparkGateway } from './gateways/spark.gateway';
 import { SPARK_REPOSITORY } from './repositories/spark.repository';
 import { TypeOrmSparkRepository } from './repositories/typeorm-spark.repository';
 import { QUESTION_GENERATOR } from './generator/question-generator';
-import { OpenAiQuestionGenerator } from './generator/openai-question-generator';
+import { ManifestQuestionGenerator } from './generator/manifest-question-generator';
 import { StubQuestionGenerator } from './generator/stub-question-generator';
 
 /**
  * Spark — the daily two-parent bonding question. The persistence port and the
  * question generator are both bound here (DIP): swap the DB adapter, and under
- * NODE_ENV=test use a deterministic generator so suites never hit OpenAI.
+ * NODE_ENV=test use a deterministic generator so suites never hit Manifest.
  */
 @Module({
   imports: [
@@ -38,7 +38,7 @@ import { StubQuestionGenerator } from './generator/stub-question-generator';
       useFactory: (config: ConfigService) =>
         process.env.NODE_ENV === 'test'
           ? new StubQuestionGenerator()
-          : new OpenAiQuestionGenerator(config),
+          : new ManifestQuestionGenerator(config),
     },
   ],
   exports: [SparkService],

@@ -3,10 +3,10 @@ import { IQuestionGenerator } from './question-generator';
 
 /**
  * Deterministic generator used only under NODE_ENV=test so suites never reach
- * out to OpenAI. It is NOT a production fallback — outside tests a missing
- * OPENAI_API_KEY fails closed (see OpenAiQuestionGenerator). The counter makes
- * each call return a distinct question, which lets the regenerate path be
- * asserted ("the question changed").
+ * out to Manifest. It is NOT a production fallback — outside tests a missing
+ * MANIFEST_API_KEY fails closed (see ManifestQuestionGenerator). The counter
+ * makes each call return a distinct question, which lets the regenerate path
+ * be asserted ("the question changed").
  */
 @Injectable()
 export class StubQuestionGenerator implements IQuestionGenerator {

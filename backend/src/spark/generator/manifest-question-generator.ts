@@ -10,7 +10,9 @@ import {
   IQuestionGenerator,
 } from './question-generator';
 
-const DEFAULT_MODEL = 'gpt-4o-mini';
+const DEFAULT_BASE_URL = 'https://app.manifest.build/v1';
+/** Manifest's only valid request model — the router picks the provider. */
+const MODEL = 'manifest/auto';
 const MAX_LENGTH = 500; // matches the SparkQuestion.text column width
 
 const SYSTEM_PROMPT =
@@ -21,27 +23,30 @@ const SYSTEM_PROMPT =
   'no quotation marks, no numbering, no emoji.';
 
 /**
- * Generates questions with the OpenAI Chat Completions API. The model is read
- * from `OPENAI_MODEL` (default `gpt-4o-mini`). The client is built lazily so
- * the app still boots without a key — only generating actually needs one.
- * There is no static fallback by design: a missing/invalid key fails closed,
- * the same posture as a missing JWT_SECRET in production.
+ * Generates questions through Manifest (manifest.build), an OpenAI-compatible
+ * LLM router. `manifest/auto` is the only valid request model — the router
+ * picks the actual provider; provider-specific names (`gpt-4o-mini`, etc.) are
+ * not accepted. Self-hosted instances are supported via `MANIFEST_BASE_URL`.
+ * The client is built lazily so the app still boots without a key — only
+ * generating actually needs one. There is no static fallback by design: a
+ * missing/invalid key fails closed, the same posture as a missing JWT_SECRET
+ * in production.
  */
 @Injectable()
-export class OpenAiQuestionGenerator implements IQuestionGenerator {
-  private readonly logger = new Logger(OpenAiQuestionGenerator.name);
-  private readonly model: string;
+export class ManifestQuestionGenerator implements IQuestionGenerator {
+  private readonly logger = new Logger(ManifestQuestionGenerator.name);
+  private readonly baseURL: string;
   private client: OpenAI | null = null;
 
   constructor(private readonly config: ConfigService) {
-    this.model =
-      this.config.get<string>('OPENAI_MODEL')?.trim() || DEFAULT_MODEL;
+    this.baseURL =
+      this.config.get<string>('MANIFEST_BASE_URL')?.trim() || DEFAULT_BASE_URL;
   }
 
   async generate(options: GenerateQuestionOptions = {}): Promise<string> {
     const client = this.getClient();
     const completion = await client.chat.completions.create({
-      model: this.model,
+      model: MODEL,
       temperature: 1,
       max_completion_tokens: 120,
       messages: [
@@ -56,19 +61,19 @@ export class OpenAiQuestionGenerator implements IQuestionGenerator {
         'The question generator returned an empty response',
       );
     }
-    this.logger.log(`Generated a Spark question with ${this.model}`);
+    this.logger.log(`Generated a Spark question via ${MODEL}`);
     return text;
   }
 
   private getClient(): OpenAI {
     if (!this.client) {
-      const apiKey = this.config.get<string>('OPENAI_API_KEY')?.trim();
+      const apiKey = this.config.get<string>('MANIFEST_API_KEY')?.trim();
       if (!apiKey) {
         throw new ServiceUnavailableException(
-          'OPENAI_API_KEY is not configured — cannot generate a question',
+          'MANIFEST_API_KEY is not configured — cannot generate a question',
         );
       }
-      this.client = new OpenAI({ apiKey });
+      this.client = new OpenAI({ apiKey, baseURL: this.baseURL });
     }
     return this.client;
   }
