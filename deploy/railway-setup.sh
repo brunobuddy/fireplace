@@ -14,7 +14,9 @@
 #   JWT_SECRET      = <fresh 32-byte random hex, generated here>
 #   JWT_EXPIRES_IN  = 7d
 #   AUTH_USERS      = the email:secret login pairs you enter (bcrypt-hashed when
-#                     backend deps are installed; plaintext otherwise — both work)
+#                     backend deps are installed; plaintext otherwise — both work).
+#                     ORDER MATTERS: the seeder maps the FIRST entry → Bruno
+#                     and the SECOND → Audrey on every boot.
 #
 # It deliberately does NOT set:
 #   DB_SSL    — the private DATABASE_URL is on Railway's isolated network and
@@ -104,7 +106,8 @@ build_auth_users() {
       pairs+=("$email:$(hash_secret "$secret")")
     done
   else
-    info "Enter the family's login users. Press Enter on a blank email to finish."
+    info "Enter the two household logins (order matters: 1st → Bruno, 2nd → Audrey)."
+    info "Press Enter on a blank email to finish."
     while true; do
       local email secret
       printf 'Email (blank to finish): ' >&2; IFS= read -r email

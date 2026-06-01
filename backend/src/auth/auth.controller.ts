@@ -12,7 +12,7 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(200)
-  login(@Body() dto: LoginDto): { token: string; user: AuthUser } {
+  login(@Body() dto: LoginDto): Promise<{ token: string; user: AuthUser }> {
     return this.auth.login(dto.email, dto.password);
   }
 

@@ -13,8 +13,9 @@ import { TodosService, TodoSnapshot } from '../services/todos.service';
 import { Todo } from '../entities/todo.entity';
 import { CreateTodoDto } from '../dto/create-todo.dto';
 import { UpdateTodoDto } from '../dto/update-todo.dto';
-import { ToggleTodoDto } from '../dto/toggle-todo.dto';
 import { CreateTodoCommentDto } from '../dto/create-todo-comment.dto';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { AuthUser } from '../../auth/auth.types';
 
 @Controller()
 export class TodosController {
@@ -31,8 +32,9 @@ export class TodosController {
   add(
     @Param('familyId', ParseUUIDPipe) familyId: string,
     @Body() dto: CreateTodoDto,
+    @CurrentUser() user: AuthUser,
   ): Promise<Todo> {
-    return this.todos.addTodo(familyId, dto);
+    return this.todos.addTodo(familyId, dto, user.memberId);
   }
 
   @Patch('todos/:id')
@@ -46,9 +48,9 @@ export class TodosController {
   @Post('todos/:id/toggle')
   toggle(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: ToggleTodoDto,
+    @CurrentUser() user: AuthUser,
   ): Promise<Todo> {
-    return this.todos.toggleTodo(id, dto);
+    return this.todos.toggleTodo(id, user.memberId);
   }
 
   @Delete('todos/:id')
@@ -61,8 +63,9 @@ export class TodosController {
   addComment(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateTodoCommentDto,
+    @CurrentUser() user: AuthUser,
   ): Promise<Todo> {
-    return this.todos.addComment(id, dto);
+    return this.todos.addComment(id, dto, user.memberId);
   }
 
   @Delete('todos/:todoId/comments/:commentId')

@@ -122,7 +122,6 @@ export function createTodosController(
       const saved = await todosApi.addTodo(id, {
         title: input.title,
         criticality: input.criticality,
-        createdById: me.id,
       });
       setTodos(upsert(removeById(state.todos, temp.id), saved));
     } catch (err) {
@@ -145,7 +144,7 @@ export function createTodosController(
       }),
     );
     try {
-      const saved = await todosApi.toggleTodo(todo.id, me.id);
+      const saved = await todosApi.toggleTodo(todo.id);
       setTodos(upsert(state.todos, saved));
     } catch (err) {
       setTodos(upsert(state.todos, todo));
@@ -182,10 +181,7 @@ export function createTodosController(
       upsert(state.todos, { ...todo, comments: [...todo.comments, temp] }),
     );
     try {
-      const saved = await todosApi.addComment(todo.id, {
-        authorId: me.id,
-        body,
-      });
+      const saved = await todosApi.addComment(todo.id, { body });
       setTodos(upsert(state.todos, saved));
     } catch (err) {
       setTodos(upsert(state.todos, todo));

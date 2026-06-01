@@ -1,7 +1,8 @@
-import { type Component, type JSX, For } from 'solid-js';
+import { type Component, type JSX, For, Show } from 'solid-js';
 import { A, useLocation } from '@solidjs/router';
-import { MemberSwitcher } from '@/features/family/components/MemberSwitcher';
 import { useAuth } from '@/features/auth/auth-context';
+import { useFamily } from '@/features/family/family-context';
+import { Avatar } from '@/shared/ui/Avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 
@@ -17,6 +18,7 @@ const NAV = [
 export const AppShell: Component<{ children?: JSX.Element }> = (props) => {
   const location = useLocation();
   const { logout } = useAuth();
+  const { currentMember } = useFamily();
 
   return (
     <div class="mx-auto flex min-h-full max-w-xl flex-col">
@@ -30,7 +32,17 @@ export const AppShell: Component<{ children?: JSX.Element }> = (props) => {
           </span>
         </div>
         <div class="flex items-center gap-1.5">
-          <MemberSwitcher />
+          <Show when={currentMember()}>
+            {(m) => (
+              <div
+                class="flex items-center gap-2 rounded-full border border-border/70 bg-card py-1 pl-1 pr-2.5 shadow-cosy"
+                aria-label={`Signed in as ${m().name}`}
+              >
+                <Avatar name={m().name} color={m().color} size="sm" />
+                <span class="text-sm font-bold">{m().name}</span>
+              </div>
+            )}
+          </Show>
           <Button
             variant="ghost"
             size="icon"

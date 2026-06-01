@@ -37,10 +37,11 @@ back to an insecure demo account — **demo@fireplace.app** / **demo** — so yo
 can sign in immediately (set `AUTH_USERS` + `JWT_SECRET` in `.env` for real
 credentials; see `.env.example`).
 
-After signing in, the API seeds a demo family ("The Sample Family" with Alex,
-Sam, Robin) and the aisle catalogue, so the app is usable right away. Pick a
-profile from the header switcher and start adding items — open a second
-browser to watch it sync live.
+After signing in, the API reconciles the `Home` family with **Bruno** and
+**Audrey** (the two members; emails come from `AUTH_USERS`, in that order)
+and seeds the aisle catalogue. Whatever you add is stamped with your signed-in
+identity — open a second browser, log in as the other parent, and watch it
+sync live.
 
 Copy `.env.example` to `.env` to change ports/credentials.
 
@@ -97,7 +98,9 @@ secrets for you in one command. Step-by-step: [`deploy/RAILWAY.md`](deploy/RAILW
 ## Roadmap
 
 - [x] Real-time collaborative grocery list
-- [x] Basic login gate (2 users in `.env`, JWT)
+- [x] Real-time shared to-do board
+- [x] Spark — daily two-parent bonding question
+- [x] Login = identity (2 hardcoded members, emails from `AUTH_USERS`)
 - [ ] Family agenda / shared calendar
 - [ ] Family conversations
-- [ ] Real per-user authentication (the data model is already family-scoped)
+- [ ] Multi-family / per-user accounts (the data model is already family-scoped)

@@ -14,11 +14,14 @@ import { GroceryCategory } from '../entities/grocery-category.entity';
 import { GroceryItem } from '../entities/grocery-item.entity';
 import { CreateGroceryItemDto } from '../dto/create-grocery-item.dto';
 import { UpdateGroceryItemDto } from '../dto/update-grocery-item.dto';
-import { ToggleGroceryItemDto } from '../dto/toggle-grocery-item.dto';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { AuthUser } from '../../auth/auth.types';
 
 /**
  * Thin HTTP layer. No logic here — every endpoint delegates straight to the
- * service. Real-time peers are updated by the service via the gateway.
+ * service. "Who did this" comes from the authenticated session, not the body,
+ * so the client never has to declare itself. Real-time peers are updated by
+ * the service via the gateway.
  */
 @Controller()
 export class GroceriesController {
@@ -40,8 +43,9 @@ export class GroceriesController {
   addItem(
     @Param('listId', ParseUUIDPipe) listId: string,
     @Body() dto: CreateGroceryItemDto,
+    @CurrentUser() user: AuthUser,
   ): Promise<GroceryItem> {
-    return this.groceries.addItem(listId, dto);
+    return this.groceries.addItem(listId, dto, user.memberId);
   }
 
   @Patch('grocery-items/:id')
@@ -55,9 +59,9 @@ export class GroceriesController {
   @Post('grocery-items/:id/toggle')
   toggleItem(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: ToggleGroceryItemDto,
+    @CurrentUser() user: AuthUser,
   ): Promise<GroceryItem> {
-    return this.groceries.toggleItem(id, dto);
+    return this.groceries.toggleItem(id, user.memberId);
   }
 
   @Delete('grocery-items/:id')

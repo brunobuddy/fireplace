@@ -19,8 +19,8 @@ export const groceriesApi = {
   updateItem: (id: string, changes: UpdateItemInput) =>
     http.patch<GroceryItem>(`/grocery-items/${id}`, changes),
 
-  toggleItem: (id: string, memberId: string) =>
-    http.post<GroceryItem>(`/grocery-items/${id}/toggle`, { memberId }),
+  toggleItem: (id: string) =>
+    http.post<GroceryItem>(`/grocery-items/${id}/toggle`),
 
   removeItem: (id: string) => http.del<void>(`/grocery-items/${id}`),
 

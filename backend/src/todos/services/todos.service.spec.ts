@@ -48,15 +48,16 @@ describe('TodosService', () => {
   });
 
   describe('addTodo', () => {
-    it('trims the title, defaults criticality to medium and broadcasts', async () => {
+    it('trims the title, defaults criticality, stamps the signed-in member, broadcasts', async () => {
       families.findOne.mockResolvedValue({ id: 'fam-1' });
-      const created = makeTodo({ title: 'Water plants' });
+      const created = makeTodo({ title: 'Water plants', createdById: 'mem-1' });
       todos.create.mockResolvedValue(created);
 
-      const result = await service.addTodo('fam-1', {
-        title: '  Water plants  ',
-        createdById: 'mem-1',
-      });
+      const result = await service.addTodo(
+        'fam-1',
+        { title: '  Water plants  ' },
+        'mem-1',
+      );
 
       expect(todos.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -73,7 +74,7 @@ describe('TodosService', () => {
     it('rejects when the family does not exist', async () => {
       families.findOne.mockResolvedValue(null);
       await expect(
-        service.addTodo('missing', { title: 'X', createdById: 'm' }),
+        service.addTodo('missing', { title: 'X' }, 'mem-1'),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(todos.create).not.toHaveBeenCalled();
     });
@@ -85,7 +86,7 @@ describe('TodosService', () => {
       const done = makeTodo({ status: 'done', completedById: 'mem-2' });
       todos.update.mockResolvedValue(done);
 
-      const result = await service.toggleTodo('todo-1', { memberId: 'mem-2' });
+      const result = await service.toggleTodo('todo-1', 'mem-2');
 
       expect(todos.update).toHaveBeenCalledWith(
         'todo-1',
@@ -103,7 +104,7 @@ describe('TodosService', () => {
       todos.findById.mockResolvedValue(makeTodo({ status: 'done' }));
       todos.update.mockResolvedValue(makeTodo({ status: 'open' }));
 
-      await service.toggleTodo('todo-1', { memberId: 'mem-2' });
+      await service.toggleTodo('todo-1', 'mem-2');
 
       expect(todos.update).toHaveBeenCalledWith('todo-1', {
         status: 'open',
@@ -143,17 +144,18 @@ describe('TodosService', () => {
   });
 
   describe('addComment', () => {
-    it('persists the comment then re-broadcasts the whole todo', async () => {
+    it('persists the comment with the signed-in member, then re-broadcasts the whole todo', async () => {
       const withComment = makeTodo({
         comments: [{ id: 'c1', body: 'On it!' } as never],
       });
       todos.findById.mockResolvedValue(withComment);
       todos.addComment.mockResolvedValue({ id: 'c1' } as never);
 
-      const result = await service.addComment('todo-1', {
-        body: '  On it!  ',
-        authorId: 'mem-2',
-      });
+      const result = await service.addComment(
+        'todo-1',
+        { body: '  On it!  ' },
+        'mem-2',
+      );
 
       expect(todos.addComment).toHaveBeenCalledWith({
         todoId: 'todo-1',

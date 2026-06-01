@@ -5,7 +5,6 @@ interface CreateTodoInput {
   title: string;
   description?: string;
   criticality?: TodoCriticality;
-  createdById: string;
 }
 
 interface UpdateTodoInput {
@@ -24,12 +23,11 @@ export const todosApi = {
   updateTodo: (id: string, changes: UpdateTodoInput) =>
     http.patch<Todo>(`/todos/${id}`, changes),
 
-  toggleTodo: (id: string, memberId: string) =>
-    http.post<Todo>(`/todos/${id}/toggle`, { memberId }),
+  toggleTodo: (id: string) => http.post<Todo>(`/todos/${id}/toggle`),
 
   removeTodo: (id: string) => http.del<void>(`/todos/${id}`),
 
-  addComment: (id: string, input: { authorId: string; body: string }) =>
+  addComment: (id: string, input: { body: string }) =>
     http.post<Todo>(`/todos/${id}/comments`, input),
 
   removeComment: (todoId: string, commentId: string) =>

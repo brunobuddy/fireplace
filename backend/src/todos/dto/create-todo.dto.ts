@@ -2,7 +2,6 @@ import {
   IsIn,
   IsOptional,
   IsString,
-  IsUUID,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -22,7 +21,4 @@ export class CreateTodoDto {
   @IsOptional()
   @IsIn(['low', 'medium', 'high'])
   criticality?: TodoCriticality;
-
-  @IsUUID()
-  createdById!: string;
 }

@@ -5,14 +5,20 @@ import { Family } from './family.entity';
 export type MemberRole = 'parent' | 'child';
 
 /**
- * A person in the family. Used as the lightweight "profile switcher" identity
- * for now (no passwords). The data model is already family-scoped so real
- * authentication can be layered on later without a migration.
+ * A person in the family. Carries the login email so the auth layer can map a
+ * signed-in session back to the member that stamps grocery items, to-dos and
+ * Spark answers. The model stays family-scoped so multi-family deployments can
+ * layer on later without a migration.
  */
 @Entity('members')
 export class Member extends BaseEntity {
   @Column({ type: 'varchar', length: 80 })
   name!: string;
+
+  /** Login email — kept lowercased. Unique so the auth layer can resolve a session. */
+  @Index({ unique: true })
+  @Column({ type: 'varchar', length: 200 })
+  email!: string;
 
   @Column({ type: 'varchar', length: 16, default: 'parent' })
   role!: MemberRole;

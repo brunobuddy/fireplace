@@ -1,5 +1,5 @@
 process.env.NODE_ENV = 'test';
-process.env.AUTH_USERS = 'parent@fireplace.app:test-pass';
+process.env.AUTH_USERS = 'bruno@e2e.app:test-pass,audrey@e2e.app:test-pass';
 process.env.JWT_SECRET = 'e2e-test-secret';
 
 import { INestApplication, ValidationPipe } from '@nestjs/common';
@@ -37,20 +37,26 @@ describe('Auth (e2e)', () => {
       .post('/api/auth/login')
       .send({ email, password });
 
-  it('logs in with valid credentials and returns a token + user', async () => {
-    const res = await login('parent@fireplace.app', 'test-pass');
+  it('logs in and returns a token + the signed-in member profile', async () => {
+    const res = await login('bruno@e2e.app', 'test-pass');
     expect(res.status).toBe(200);
     expect(typeof res.body.token).toBe('string');
-    expect(res.body.user).toEqual({ email: 'parent@fireplace.app' });
+    expect(res.body.user).toMatchObject({
+      email: 'bruno@e2e.app',
+      name: 'Bruno',
+      role: 'parent',
+    });
+    expect(typeof res.body.user.memberId).toBe('string');
+    expect(typeof res.body.user.familyId).toBe('string');
   });
 
   it('is case-insensitive on the email', async () => {
-    const res = await login('Parent@Fireplace.App', 'test-pass');
+    const res = await login('Bruno@E2E.App', 'test-pass');
     expect(res.status).toBe(200);
   });
 
   it('rejects a wrong password with 401', async () => {
-    const res = await login('parent@fireplace.app', 'nope');
+    const res = await login('bruno@e2e.app', 'nope');
     expect(res.status).toBe(401);
   });
 
@@ -65,7 +71,7 @@ describe('Auth (e2e)', () => {
   });
 
   it('allows protected routes and /auth/me with a valid token', async () => {
-    const { body } = await login('parent@fireplace.app', 'test-pass');
+    const { body } = await login('bruno@e2e.app', 'test-pass');
     const bearer = `Bearer ${body.token}`;
 
     const families = await request(app.getHttpServer())
@@ -77,7 +83,7 @@ describe('Auth (e2e)', () => {
       .get('/api/auth/me')
       .set('Authorization', bearer);
     expect(me.status).toBe(200);
-    expect(me.body).toEqual({ email: 'parent@fireplace.app' });
+    expect(me.body).toEqual(body.user);
   });
 
   it('rejects a garbage token with 401', async () => {
