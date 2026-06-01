@@ -8,7 +8,14 @@ import { SparkQuestion } from '../entities/spark-question.entity';
 import { SparkAnswer } from '../entities/spark-answer.entity';
 
 const parent = (id: string, name: string): Member =>
-  ({ id, name, role: 'parent', color: '#fff', familyId: 'fam-1' }) as Member;
+  ({
+    id,
+    name,
+    email: `${name.toLowerCase()}@x`,
+    role: 'parent',
+    color: '#fff',
+    familyId: 'fam-1',
+  }) as Member;
 
 const activeQuestion = (over: Partial<SparkQuestion> = {}): SparkQuestion =>
   ({
@@ -38,8 +45,8 @@ describe('SparkService', () => {
   let families: { findOne: jest.Mock; find: jest.Mock };
   let service: SparkService;
 
-  const alex = parent('m-alex', 'Alex');
-  const sam = parent('m-sam', 'Sam');
+  const bruno = parent('m-bruno', 'Bruno');
+  const audrey = parent('m-audrey', 'Audrey');
 
   beforeEach(() => {
     jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
@@ -55,7 +62,7 @@ describe('SparkService', () => {
     };
     generator = { generate: jest.fn() };
     gateway = { emitUpdated: jest.fn(), emitQuestion: jest.fn() };
-    members = { find: jest.fn().mockResolvedValue([alex, sam]) };
+    members = { find: jest.fn().mockResolvedValue([bruno, audrey]) };
     families = {
       findOne: jest.fn().mockResolvedValue({ id: 'fam-1' }),
       find: jest.fn(),
@@ -76,61 +83,63 @@ describe('SparkService', () => {
       spark.findActiveQuestion.mockResolvedValue(activeQuestion());
       spark.findAnswers
         .mockResolvedValueOnce([]) // existing check
-        .mockResolvedValueOnce([answerRow('m-alex', 'mine')]); // after write
-      spark.upsertAnswer.mockResolvedValue(answerRow('m-alex', 'mine'));
+        .mockResolvedValueOnce([answerRow('m-bruno', 'mine')]); // after write
+      spark.upsertAnswer.mockResolvedValue(answerRow('m-bruno', 'mine'));
 
-      const view = await service.answer('fam-1', {
-        memberId: 'm-alex',
-        text: '  mine  ',
-      });
+      const view = await service.answer(
+        'fam-1',
+        { text: '  mine  ' },
+        'm-bruno',
+      );
 
       expect(spark.upsertAnswer).toHaveBeenCalledWith({
         questionId: 'q1',
-        memberId: 'm-alex',
+        memberId: 'm-bruno',
         text: 'mine',
       });
       expect(gateway.emitUpdated).toHaveBeenCalledWith({
         familyId: 'fam-1',
         questionId: 'q1',
-        answeredMemberIds: ['m-alex'],
+        answeredMemberIds: ['m-bruno'],
         revealed: false,
       });
       expect(view.viewerHasAnswered).toBe(true);
       expect(view.revealed).toBe(false);
       expect(
-        view.participants.find((p) => p.memberId === 'm-sam')?.text,
+        view.participants.find((p) => p.memberId === 'm-audrey')?.text,
       ).toBeNull();
     });
 
     it('reveals once the second parent answers', async () => {
       spark.findActiveQuestion.mockResolvedValue(activeQuestion());
       spark.findAnswers
-        .mockResolvedValueOnce([answerRow('m-alex', 'alex')])
+        .mockResolvedValueOnce([answerRow('m-bruno', 'bruno')])
         .mockResolvedValueOnce([
-          answerRow('m-alex', 'alex'),
-          answerRow('m-sam', 'sam'),
+          answerRow('m-bruno', 'bruno'),
+          answerRow('m-audrey', 'audrey'),
         ]);
-      spark.upsertAnswer.mockResolvedValue(answerRow('m-sam', 'sam'));
+      spark.upsertAnswer.mockResolvedValue(answerRow('m-audrey', 'audrey'));
 
-      const view = await service.answer('fam-1', {
-        memberId: 'm-sam',
-        text: 'sam',
-      });
+      const view = await service.answer(
+        'fam-1',
+        { text: 'audrey' },
+        'm-audrey',
+      );
 
       expect(gateway.emitUpdated).toHaveBeenCalledWith(
         expect.objectContaining({
           revealed: true,
-          answeredMemberIds: ['m-alex', 'm-sam'],
+          answeredMemberIds: ['m-bruno', 'm-audrey'],
         }),
       );
       expect(view.revealed).toBe(true);
     });
 
-    it('rejects an answer from someone who is not a parent', async () => {
+    it('rejects an answer from a member id that is not one of the parents', async () => {
       spark.findActiveQuestion.mockResolvedValue(activeQuestion());
       spark.findAnswers.mockResolvedValue([]);
       await expect(
-        service.answer('fam-1', { memberId: 'm-robin', text: 'hi' }),
+        service.answer('fam-1', { text: 'hi' }, 'm-stranger'),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(spark.upsertAnswer).not.toHaveBeenCalled();
     });
@@ -138,11 +147,11 @@ describe('SparkService', () => {
     it('locks further answers once both have answered', async () => {
       spark.findActiveQuestion.mockResolvedValue(activeQuestion());
       spark.findAnswers.mockResolvedValue([
-        answerRow('m-alex'),
-        answerRow('m-sam'),
+        answerRow('m-bruno'),
+        answerRow('m-audrey'),
       ]);
       await expect(
-        service.answer('fam-1', { memberId: 'm-alex', text: 'changed' }),
+        service.answer('fam-1', { text: 'changed' }, 'm-bruno'),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(spark.upsertAnswer).not.toHaveBeenCalled();
     });
@@ -150,7 +159,7 @@ describe('SparkService', () => {
     it('throws when there is no active question', async () => {
       spark.findActiveQuestion.mockResolvedValue(null);
       await expect(
-        service.answer('fam-1', { memberId: 'm-alex', text: 'hi' }),
+        service.answer('fam-1', { text: 'hi' }, 'm-bruno'),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
@@ -166,7 +175,7 @@ describe('SparkService', () => {
         }),
       );
 
-      const view = await service.regenerate('fam-1', 'm-alex');
+      const view = await service.regenerate('fam-1', 'm-bruno');
 
       expect(spark.archiveActiveQuestions).toHaveBeenCalledWith('fam-1');
       expect(spark.createQuestion).toHaveBeenCalledWith({
@@ -212,8 +221,8 @@ describe('SparkService', () => {
       spark.findAnswers.mockImplementation((questionId: string) =>
         Promise.resolve(
           questionId === 'q-fam-done'
-            ? [answerRow('m-alex'), answerRow('m-sam')]
-            : [answerRow('m-alex')],
+            ? [answerRow('m-bruno'), answerRow('m-audrey')]
+            : [answerRow('m-bruno')],
         ),
       );
 

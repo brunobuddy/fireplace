@@ -39,7 +39,7 @@ export function createSparkController(
     if (!fid || !me) return;
     setState({ status: 'loading', error: null });
     try {
-      const view = await sparkApi.view(fid, me.id);
+      const view = await sparkApi.view(fid);
       setState({ status: 'ready', view });
       joinRealtime(fid);
     } catch (err) {
@@ -92,10 +92,7 @@ export function createSparkController(
     const previous = state.view;
     setState({ view: applyOwnAnswer(previous, me.id, trimmed), error: null }); // optimistic
     try {
-      const view = await sparkApi.answer(fid, {
-        memberId: me.id,
-        text: trimmed,
-      });
+      const view = await sparkApi.answer(fid, { text: trimmed });
       setState({ view, error: null });
     } catch (err) {
       // Revert the optimistic answer and surface the failure. No reload here —
@@ -110,7 +107,7 @@ export function createSparkController(
     if (!fid || !me) return;
     setState({ generating: true, error: null });
     try {
-      const view = await sparkApi.regenerate(fid, me.id);
+      const view = await sparkApi.regenerate(fid);
       setState({ view, generating: false });
     } catch (err) {
       setState({ generating: false, error: describe(err) });

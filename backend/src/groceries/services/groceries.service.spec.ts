@@ -61,21 +61,23 @@ describe('GroceriesService', () => {
   });
 
   describe('addItem', () => {
-    it('creates the item, trims input and broadcasts it', async () => {
+    it('creates the item, trims input, stamps the signed-in member, and broadcasts', async () => {
       lists.findOne.mockResolvedValue({ id: 'list-1' });
-      const created = makeItem({ name: 'Eggs' });
+      const created = makeItem({ name: 'Eggs', addedById: 'mem-1' });
       items.create.mockResolvedValue(created);
 
-      const result = await service.addItem('list-1', {
-        name: '  Eggs  ',
-        addedById: 'mem-1',
-      });
+      const result = await service.addItem(
+        'list-1',
+        { name: '  Eggs  ' },
+        'mem-1',
+      );
 
       expect(items.create).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Eggs',
           quantity: 1,
           listId: 'list-1',
+          addedById: 'mem-1',
         }),
       );
       expect(gateway.emitItemAdded).toHaveBeenCalledWith(created);
@@ -85,7 +87,7 @@ describe('GroceriesService', () => {
     it('rejects when the list does not exist', async () => {
       lists.findOne.mockResolvedValue(null);
       await expect(
-        service.addItem('missing', { name: 'X', addedById: 'm' }),
+        service.addItem('missing', { name: 'X' }, 'mem-1'),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(items.create).not.toHaveBeenCalled();
     });
@@ -97,7 +99,7 @@ describe('GroceriesService', () => {
       const done = makeItem({ status: 'done', checkedById: 'mem-2' });
       items.update.mockResolvedValue(done);
 
-      const result = await service.toggleItem('item-1', { memberId: 'mem-2' });
+      const result = await service.toggleItem('item-1', 'mem-2');
 
       expect(items.update).toHaveBeenCalledWith('item-1', {
         status: 'done',
@@ -111,7 +113,7 @@ describe('GroceriesService', () => {
       items.findById.mockResolvedValue(makeItem({ status: 'done' }));
       items.update.mockResolvedValue(makeItem({ status: 'pending' }));
 
-      await service.toggleItem('item-1', { memberId: 'mem-2' });
+      await service.toggleItem('item-1', 'mem-2');
 
       expect(items.update).toHaveBeenCalledWith('item-1', {
         status: 'pending',

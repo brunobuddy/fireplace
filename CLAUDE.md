@@ -47,18 +47,23 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
 
 ## 3. Decisions log (don't relitigate without asking)
 
-- **Identity = profile switcher, no passwords.** Seeded family + members;
-  the chosen member is stamped on items. Data model is family-scoped so
-  real auth slots in later — that's the seam, no migration needed.
-- **Access = app-level login gate (2 users in `.env`), separate from the
-  profile switcher.** `AUTH_USERS` holds comma-separated `email:secret` pairs
-  (secret = plaintext _or_ bcrypt hash, auto-detected); login mints a JWT
-  (`JWT_SECRET` / `JWT_EXPIRES_IN`). A global guard protects every route —
-  `@Public()` opts out (login + health) — and the websocket gateway verifies
-  the token on connect. Token is a **bearer in `localStorage`** (sent as the
-  `Authorization` header and in the Socket.IO handshake) — simpler than
-  httpOnly cookies, no CSRF machinery, and a clean fit for the websocket
-  handshake. Member identity stays passwordless.
+- **Identity = login.** Two hardcoded household members (`Bruno` and
+  `Audrey`, both `role: 'parent'`) live in `seeder.service.ts`; their **emails
+  come from `AUTH_USERS`** (first entry → Bruno, second → Audrey) so they
+  stay out of the public repo. The seeder reconciles the rows on every boot
+  so rotating an email in Railway propagates without a DB wipe. There is no
+  profile switcher — the signed-in user IS the identity, and every write is
+  stamped server-side from the JWT.
+- **Access = app-level login gate (2 users in `AUTH_USERS`).** Same env var
+  as identity: comma-separated `email:secret` pairs (secret = plaintext _or_
+  bcrypt hash, auto-detected). Login mints a JWT carrying the member's UUID,
+  family id, name, role and color, so controllers never have to trust the
+  client when it asks "who am I?" (`JWT_SECRET` / `JWT_EXPIRES_IN`). A global
+  guard protects every route — `@Public()` opts out (login + health) — and
+  the websocket gateways verify the token on connect. Token is a **bearer in
+  `localStorage`** (sent as the `Authorization` header and in the Socket.IO
+  handshake) — simpler than httpOnly cookies, no CSRF machinery, and a clean
+  fit for the websocket handshake.
 - **One service — NestJS serves the SPA *and* the API on a single port/origin**
   (one Railway service), like `mnfst/manifest`. The SPA calls relative `/api`
   and connects the socket same-origin; in dev Vite proxies `/api` +
@@ -82,15 +87,19 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
 - Feature modules: `auth/`, `family/`, `groceries/`, `todos/`, `spark/`,
   `health/`; `database/` owns the connection + bootstrap seeder. New domains
   are added to `app.module.ts` without touching existing ones (OCP).
-- **Auth:** `auth/` gates the app. `EnvUserStore` (the swap-for-DB seam, DIP)
-  parses `AUTH_USERS` and feeds `AuthService` (constant-time SHA-256 compare
-  for plaintext / bcrypt for hashes; JWT mint + verify). A global
-  `JwtAuthGuard` (`APP_GUARD`) denies by default; `@Public()` exempts
-  `POST /api/auth/login` + `GET /api/health`. `GroceriesGateway` and
-  `TodosGateway` verify the handshake token and drop unauthenticated sockets.
-  Fail-closed: in production a missing `JWT_SECRET` aborts boot; outside
-  production an insecure dev secret + demo login (`demo@fireplace.app` /
-  `demo`) are used and logged.
+- **Auth:** `auth/` gates the app and **is** the identity layer. `EnvUserStore`
+  (the swap-for-DB seam, DIP) parses `AUTH_USERS` and feeds `AuthService`
+  (constant-time SHA-256 compare for plaintext / bcrypt for hashes). On a
+  correct password the service resolves the email to a `Member` row and
+  signs a JWT that carries the member's UUID, family id, name, role and
+  color — so every controller can pull `@CurrentUser()` and stamp writes
+  itself, never trusting a client-supplied id. A global `JwtAuthGuard`
+  (`APP_GUARD`) denies by default; `@Public()` exempts `POST /api/auth/login`
+  + `GET /api/health`. `GroceriesGateway`, `TodosGateway` and `SparkGateway`
+  verify the handshake token and drop unauthenticated sockets. Fail-closed:
+  in production a missing `JWT_SECRET` aborts boot; outside production an
+  insecure dev secret + demo login (`demo@fireplace.app` / `demo`) are used
+  and logged.
 - **Dependency Inversion:** `GroceriesService` depends on the
   `IGroceryItemRepository` port (token + interface), bound to a TypeORM
   adapter in the module. Swap persistence / fake in tests = one line.
@@ -117,9 +126,10 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   SQLite; `DATABASE_URL` set → that URL (Railway); else discrete `DB_*`.
   `DB_SYNCHRONIZE` (default: on unless `NODE_ENV=production`) controls
   schema sync — **no migrations yet**. `DB_SSL` / `sslmode=require` → TLS.
-- The seeder (`database/seed/`) is idempotent: ensures the aisle catalogue
-  + one demo family ("The Sample Family": Alex, Sam, Robin) and a few demo
-  to-dos (one already commented) on a fresh DB.
+- The seeder (`database/seed/`) is idempotent: ensures the aisle catalogue,
+  reconciles the `Home` family + Bruno and Audrey (emails from `AUTH_USERS`,
+  first entry → Bruno, second → Audrey), and seeds one starter Spark
+  question so the page works before the first OpenAI call. No demo to-dos.
 - `GET /api/health` → liveness probe (Docker + Railway).
 - **Serves the SPA:** in production `ServeStaticModule` serves the built
   `frontend/dist` from the same server (history fallback; `/api` + `/socket.io`

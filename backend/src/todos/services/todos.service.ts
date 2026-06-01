@@ -10,7 +10,6 @@ import {
 } from '../repositories/todo.repository';
 import { CreateTodoDto } from '../dto/create-todo.dto';
 import { UpdateTodoDto } from '../dto/update-todo.dto';
-import { ToggleTodoDto } from '../dto/toggle-todo.dto';
 import { CreateTodoCommentDto } from '../dto/create-todo-comment.dto';
 import { TodosGateway } from '../gateways/todos.gateway';
 
@@ -33,14 +32,18 @@ export class TodosService {
     return { todos };
   }
 
-  async addTodo(familyId: string, dto: CreateTodoDto): Promise<Todo> {
+  async addTodo(
+    familyId: string,
+    dto: CreateTodoDto,
+    memberId: string,
+  ): Promise<Todo> {
     await this.requireFamily(familyId);
     const todo = await this.todos.create({
       familyId,
       title: dto.title.trim(),
       description: dto.description?.trim() || null,
       criticality: dto.criticality ?? 'medium',
-      createdById: dto.createdById,
+      createdById: memberId,
     });
     this.gateway.emitTodoAdded(todo);
     return todo;
@@ -57,12 +60,12 @@ export class TodosService {
     return updated;
   }
 
-  async toggleTodo(id: string, dto: ToggleTodoDto): Promise<Todo> {
+  async toggleTodo(id: string, memberId: string): Promise<Todo> {
     const current = await this.requireTodo(id);
     const nowDone = current.status !== 'done';
     const updated = await this.todos.update(id, {
       status: nowDone ? 'done' : 'open',
-      completedById: nowDone ? dto.memberId : null,
+      completedById: nowDone ? memberId : null,
       completedAt: nowDone ? new Date().toISOString() : null,
     });
     this.gateway.emitTodoUpdated(updated);
@@ -75,11 +78,15 @@ export class TodosService {
     this.gateway.emitTodoRemoved({ id, familyId: todo.familyId });
   }
 
-  async addComment(todoId: string, dto: CreateTodoCommentDto): Promise<Todo> {
+  async addComment(
+    todoId: string,
+    dto: CreateTodoCommentDto,
+    memberId: string,
+  ): Promise<Todo> {
     await this.requireTodo(todoId);
     await this.todos.addComment({
       todoId,
-      authorId: dto.authorId,
+      authorId: memberId,
       body: dto.body.trim(),
     });
     const updated = await this.requireTodo(todoId);

@@ -2,12 +2,21 @@
  * Domain types mirrored from the backend API contract. Kept in one place so
  * the store, components and socket handlers all speak the same shape.
  */
-/** The signed-in app user (login gate — distinct from the member switcher). */
-export interface AuthUser {
-  email: string;
-}
-
 export type MemberRole = 'parent' | 'child';
+
+/**
+ * The signed-in user. Login = identity in this app — the JWT carries the full
+ * member profile so writes are attributed server-side without the client ever
+ * declaring "who I am" in a request body.
+ */
+export interface AuthUser {
+  memberId: string;
+  familyId: string;
+  email: string;
+  name: string;
+  role: MemberRole;
+  color: string;
+}
 
 export interface Member {
   id: string;
@@ -66,7 +75,6 @@ export interface CreateItemInput {
   unit?: string;
   note?: string;
   categoryId?: string;
-  addedById: string;
 }
 
 export type TodoCriticality = 'low' | 'medium' | 'high';

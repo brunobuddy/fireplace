@@ -1,11 +1,13 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { hashSync } from 'bcryptjs';
+import { Repository } from 'typeorm';
 import { AuthService } from './auth.service';
 import { EnvUserStore } from './users/env-user.store';
 import { CredentialRecord } from './auth.types';
+import { Member } from '../family/entities/member.entity';
 
-/** Minimal EnvUserStore stub that mirrors the real case-insensitive lookup. */
+/** Minimal EnvUserStore stub mirroring the real case-insensitive lookup. */
 function storeWith(records: CredentialRecord[]): EnvUserStore {
   return {
     findByEmail: (email: string) =>
@@ -13,59 +15,107 @@ function storeWith(records: CredentialRecord[]): EnvUserStore {
   } as EnvUserStore;
 }
 
+/** Minimal Members repo stub — only `findOne` is used by AuthService. */
+function membersWith(rows: Member[]): Repository<Member> {
+  return {
+    findOne: async ({ where }: { where: { email: string } }) =>
+      rows.find((m) => m.email === where.email) ?? null,
+  } as unknown as Repository<Member>;
+}
+
+const bruno: Member = {
+  id: 'mem-bruno',
+  familyId: 'fam-home',
+  name: 'Bruno',
+  email: 'bruno@x.io',
+  role: 'parent',
+  color: '#c2410c',
+} as Member;
+
 describe('AuthService', () => {
   const jwt = new JwtService({
     secret: 'test-secret',
     signOptions: { expiresIn: '1h' },
   });
 
-  it('validates a correct plaintext password (case-insensitive email)', () => {
+  it('logs in with a correct plaintext password (case-insensitive email)', async () => {
     const svc = new AuthService(
-      storeWith([{ email: 'a@x.io', secret: 'pw' }]),
+      storeWith([{ email: 'bruno@x.io', secret: 'pw' }]),
       jwt,
+      membersWith([bruno]),
     );
-    expect(svc.validateUser('a@x.io', 'pw')).toEqual({ email: 'a@x.io' });
-    expect(svc.validateUser('A@X.io', 'pw')).toEqual({ email: 'a@x.io' });
-    expect(svc.validateUser('a@x.io', 'wrong')).toBeNull();
-    expect(svc.validateUser('missing@x.io', 'pw')).toBeNull();
+    const { user } = await svc.login('Bruno@X.io', 'pw');
+    expect(user).toMatchObject({
+      memberId: 'mem-bruno',
+      familyId: 'fam-home',
+      email: 'bruno@x.io',
+      name: 'Bruno',
+      role: 'parent',
+    });
   });
 
-  it('validates a bcrypt-hashed password', () => {
+  it('logs in with a bcrypt-hashed password', async () => {
     const svc = new AuthService(
-      storeWith([{ email: 'a@x.io', secret: hashSync('secret', 10) }]),
+      storeWith([{ email: 'bruno@x.io', secret: hashSync('secret', 10) }]),
       jwt,
+      membersWith([bruno]),
     );
-    expect(svc.validateUser('a@x.io', 'secret')).toEqual({ email: 'a@x.io' });
-    expect(svc.validateUser('a@x.io', 'nope')).toBeNull();
+    const { user } = await svc.login('bruno@x.io', 'secret');
+    expect(user.memberId).toBe('mem-bruno');
+    await expect(svc.login('bruno@x.io', 'nope')).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
   });
 
-  it('issues a token that verifies back to the user', () => {
+  it('issues a token that verifies back to the same user', async () => {
     const svc = new AuthService(
-      storeWith([{ email: 'a@x.io', secret: 'pw' }]),
+      storeWith([{ email: 'bruno@x.io', secret: 'pw' }]),
       jwt,
+      membersWith([bruno]),
     );
-    const { token, user } = svc.login('a@x.io', 'pw');
-    expect(user).toEqual({ email: 'a@x.io' });
-    expect(svc.verify(token)).toEqual({ email: 'a@x.io' });
-    expect(jwt.verify(token)).toMatchObject({ sub: 'a@x.io', email: 'a@x.io' });
+    const { token, user } = await svc.login('bruno@x.io', 'pw');
+    expect(svc.verify(token)).toEqual(user);
+    expect(jwt.verify(token)).toMatchObject({
+      sub: 'mem-bruno',
+      memberId: 'mem-bruno',
+      familyId: 'fam-home',
+      email: 'bruno@x.io',
+      name: 'Bruno',
+    });
   });
 
-  it('throws a generic 401 on bad credentials', () => {
+  it('throws a generic 401 on a wrong password', async () => {
     const svc = new AuthService(
-      storeWith([{ email: 'a@x.io', secret: 'pw' }]),
+      storeWith([{ email: 'bruno@x.io', secret: 'pw' }]),
       jwt,
+      membersWith([bruno]),
     );
-    expect(() => svc.login('a@x.io', 'wrong')).toThrow(UnauthorizedException);
-    expect(() => svc.login('a@x.io', 'wrong')).toThrow(
+    await expect(svc.login('bruno@x.io', 'wrong')).rejects.toThrow(
       'Invalid email or password',
     );
   });
 
+  it('refuses an email that has no member row yet', async () => {
+    const svc = new AuthService(
+      storeWith([{ email: 'ghost@x.io', secret: 'pw' }]),
+      jwt,
+      membersWith([bruno]),
+    );
+    await expect(svc.login('ghost@x.io', 'pw')).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
+  });
+
   it('rejects a token signed with a different secret', () => {
-    const svc = new AuthService(storeWith([]), jwt);
+    const svc = new AuthService(storeWith([]), jwt, membersWith([]));
     const foreign = new JwtService({ secret: 'other-secret' }).sign({
-      sub: 'a@x.io',
-      email: 'a@x.io',
+      sub: 'mem-bruno',
+      memberId: 'mem-bruno',
+      familyId: 'fam-home',
+      email: 'bruno@x.io',
+      name: 'Bruno',
+      role: 'parent',
+      color: '#c2410c',
     });
     expect(() => svc.verify(foreign)).toThrow();
   });

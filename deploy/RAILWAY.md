@@ -43,7 +43,7 @@ Open the URL, log in with one of the `AUTH_USERS` you entered. Done.
 | `DB_SYNCHRONIZE` | `true`                         | setup script   | Creates the schema on first boot (no migrations yet). Flip to `false` after the first deploy. |
 | `JWT_SECRET`     | fresh 32-byte random hex       | setup script   | App refuses to boot in production without it. |
 | `JWT_EXPIRES_IN` | `7d`                           | setup script   | Token lifetime; optional. |
-| `AUTH_USERS`     | `email:secret,…`               | setup script   | Your login users; bcrypt-hashed when backend deps are installed. |
+| `AUTH_USERS`     | `email:secret,email:secret`    | setup script   | Two login pairs. **Order matters:** first → Bruno, second → Audrey (the seeder maps them onto the two hardcoded members on every boot). Bcrypt-hashed when backend deps are installed. |
 | `NODE_ENV`       | `production`                   | **image**      | Baked into `backend/Dockerfile` — nothing to set. |
 | `PORT`           | (injected)                     | **Railway**    | The app binds to it automatically. |
 
@@ -72,7 +72,7 @@ Railway's TCP proxy and does use TLS.
    DB_SYNCHRONIZE=true
    JWT_SECRET=<paste a long random string>
    JWT_EXPIRES_IN=7d
-   AUTH_USERS=alex@your.app:<password-or-bcrypt-hash>,sam@your.app:<…>
+   AUTH_USERS=bruno@your.app:<password-or-bcrypt-hash>,audrey@your.app:<…>
    ```
 
    - Generate a secret: `openssl rand -hex 32`
@@ -87,7 +87,8 @@ Railway's TCP proxy and does use TLS.
 
 ## After the first deploy
 
-- The seeder runs idempotently on boot (aisle catalogue + a demo family).
+- The seeder runs idempotently on boot (aisle catalogue + the `Home` family
+  with Bruno and Audrey reconciled from `AUTH_USERS`).
 - Set **`DB_SYNCHRONIZE=false`** once the schema exists — leaving auto-sync on
   risks unintended schema changes as entities evolve. Add TypeORM migrations
   before real data matters (see CLAUDE.md §9).

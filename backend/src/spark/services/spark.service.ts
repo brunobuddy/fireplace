@@ -65,10 +65,14 @@ export class SparkService {
     return buildSparkView(question, answers, participants, viewerMemberId);
   }
 
-  async answer(familyId: string, dto: AnswerSparkDto): Promise<SparkView> {
+  async answer(
+    familyId: string,
+    dto: AnswerSparkDto,
+    memberId: string,
+  ): Promise<SparkView> {
     const question = await this.requireActiveQuestion(familyId);
     const participants = await this.participantsOf(familyId);
-    if (!participants.some((p) => p.id === dto.memberId)) {
+    if (!participants.some((p) => p.id === memberId)) {
       throw new ForbiddenException(
         'Only the two parents can answer the Spark question',
       );
@@ -83,7 +87,7 @@ export class SparkService {
 
     await this.spark.upsertAnswer({
       questionId: question.id,
-      memberId: dto.memberId,
+      memberId,
       text: dto.text.trim(),
     });
 
@@ -98,7 +102,7 @@ export class SparkService {
       answeredMemberIds,
       revealed,
     });
-    return buildSparkView(question, answers, participants, dto.memberId);
+    return buildSparkView(question, answers, participants, memberId);
   }
 
   async regenerate(

@@ -2,6 +2,7 @@ import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
+import { FamilyModule } from '../family/family.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { EnvUserStore } from './users/env-user.store';
@@ -14,10 +15,12 @@ const DEV_SECRET = 'fireplace-dev-secret-change-me';
  * App-level authentication. Login users come from `AUTH_USERS`; access is
  * gated globally by JwtAuthGuard (APP_GUARD) and opened per route with
  * `@Public()`. AuthService is exported so the websocket gateway can verify
- * tokens on connect.
+ * tokens on connect. FamilyModule is imported so AuthService can resolve the
+ * signed-in email to its `Member` row (the JWT carries the member profile).
  */
 @Module({
   imports: [
+    FamilyModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

@@ -121,7 +121,6 @@ export function createGroceriesController(
         name: input.name,
         quantity: input.quantity,
         categoryId: input.categoryId,
-        addedById: me.id,
       });
       setItems(upsert(removeById(state.items, temp.id), saved));
     } catch (err) {
@@ -143,7 +142,7 @@ export function createGroceriesController(
       }),
     );
     try {
-      const saved = await groceriesApi.toggleItem(item.id, me.id);
+      const saved = await groceriesApi.toggleItem(item.id);
       setItems(upsert(state.items, saved));
     } catch (err) {
       setItems(upsert(state.items, item));

@@ -34,8 +34,4 @@ export class CreateGroceryItemDto {
   @IsOptional()
   @IsUUID()
   categoryId?: string;
-
-  /** The member adding the item (profile-switcher identity). */
-  @IsUUID()
-  addedById!: string;
 }

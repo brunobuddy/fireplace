@@ -10,7 +10,6 @@ import {
 } from '../repositories/grocery-item.repository';
 import { CreateGroceryItemDto } from '../dto/create-grocery-item.dto';
 import { UpdateGroceryItemDto } from '../dto/update-grocery-item.dto';
-import { ToggleGroceryItemDto } from '../dto/toggle-grocery-item.dto';
 import { GroceriesGateway } from '../gateways/groceries.gateway';
 
 export interface ListSnapshot {
@@ -22,7 +21,8 @@ export interface ListSnapshot {
 /**
  * All grocery-list use cases. Orchestrates persistence (through the
  * `IGroceryItemRepository` port) and broadcasts every mutation so other
- * devices stay in sync. Controllers stay thin; the gateway stays dumb.
+ * devices stay in sync. "Who did this" is always the signed-in member —
+ * controllers pass it in from the JWT.
  */
 @Injectable()
 export class GroceriesService {
@@ -53,6 +53,7 @@ export class GroceriesService {
   async addItem(
     listId: string,
     dto: CreateGroceryItemDto,
+    memberId: string,
   ): Promise<GroceryItem> {
     await this.requireList(listId);
     const item = await this.items.create({
@@ -62,7 +63,7 @@ export class GroceriesService {
       unit: dto.unit?.trim() || null,
       note: dto.note?.trim() || null,
       categoryId: dto.categoryId ?? null,
-      addedById: dto.addedById,
+      addedById: memberId,
     });
     this.gateway.emitItemAdded(item);
     return item;
@@ -78,16 +79,13 @@ export class GroceriesService {
     return updated;
   }
 
-  /** Flip pending ⇄ done, recording who did it. */
-  async toggleItem(
-    id: string,
-    dto: ToggleGroceryItemDto,
-  ): Promise<GroceryItem> {
+  /** Flip pending ⇄ done, recording who did it (the signed-in member). */
+  async toggleItem(id: string, memberId: string): Promise<GroceryItem> {
     const current = await this.requireItem(id);
     const nowDone = current.status !== 'done';
     const updated = await this.items.update(id, {
       status: nowDone ? 'done' : 'pending',
-      checkedById: nowDone ? dto.memberId : null,
+      checkedById: nowDone ? memberId : null,
     });
     this.gateway.emitItemUpdated(updated);
     return updated;
