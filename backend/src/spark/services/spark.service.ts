@@ -150,7 +150,7 @@ export class SparkService {
     const recent = await this.spark.recentQuestionTexts(familyId, RECENT_LIMIT);
     const text = await this.generator.generate({ recent });
     await this.spark.archiveActiveQuestions(familyId);
-    return this.spark.createQuestion({ familyId, text, source: 'openai' });
+    return this.spark.createQuestion({ familyId, text, source: 'manifest' });
   }
 
   private participantsOf(familyId: string): Promise<Member[]> {

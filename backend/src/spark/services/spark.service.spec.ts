@@ -162,7 +162,7 @@ describe('SparkService', () => {
         activeQuestion({
           id: 'q2',
           text: 'A brand new question?',
-          source: 'openai',
+          source: 'manifest',
         }),
       );
 
@@ -172,7 +172,7 @@ describe('SparkService', () => {
       expect(spark.createQuestion).toHaveBeenCalledWith({
         familyId: 'fam-1',
         text: 'A brand new question?',
-        source: 'openai',
+        source: 'manifest',
       });
       expect(gateway.emitQuestion).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -225,7 +225,9 @@ describe('SparkService', () => {
     it('does not crash the batch when one family fails (e.g. no API key)', async () => {
       families.find.mockResolvedValue([{ id: 'fam-1' }]);
       spark.findActiveQuestion.mockResolvedValue(null);
-      generator.generate.mockRejectedValue(new Error('OPENAI_API_KEY missing'));
+      generator.generate.mockRejectedValue(
+        new Error('MANIFEST_API_KEY missing'),
+      );
 
       await expect(service.rolloverAllFamilies()).resolves.toBeUndefined();
     });

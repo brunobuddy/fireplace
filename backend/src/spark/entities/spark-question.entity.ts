@@ -11,8 +11,8 @@ import { Family } from '../../family/entities/family.entity';
 import { SparkAnswer } from './spark-answer.entity';
 
 export type SparkQuestionStatus = 'active' | 'archived';
-/** Where the question came from — `seed` for the bootstrap one, `openai` for generated. */
-export type SparkQuestionSource = 'openai' | 'seed';
+/** Where the question came from — `seed` for the bootstrap one, `manifest` for generated. */
+export type SparkQuestionSource = 'manifest' | 'seed';
 
 /**
  * A daily bonding question for the family's two parents. Exactly one question
@@ -29,7 +29,7 @@ export class SparkQuestion extends BaseEntity {
   @Column({ type: 'varchar', length: 16, default: 'active' })
   status!: SparkQuestionStatus;
 
-  @Column({ type: 'varchar', length: 16, default: 'openai' })
+  @Column({ type: 'varchar', length: 16, default: 'manifest' })
   source!: SparkQuestionSource;
 
   @Index()

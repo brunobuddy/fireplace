@@ -101,9 +101,11 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   `completedAt` is a varchar ISO string (no pg-only date type → the SQLite
   test DB and Postgres agree).
 - **Spark** adds two ports: `ISparkRepository` (the active question + its two
-  answers) and `IQuestionGenerator` (an OpenAI Chat Completions adapter, model
-  via `OPENAI_MODEL` / default `gpt-4o-mini`; a deterministic stub binds under
-  `NODE_ENV=test` so suites never call OpenAI — there is **no runtime
+  answers) and `IQuestionGenerator` (a **Manifest** adapter — manifest.build is
+  an OpenAI-compatible LLM router; model is hardcoded to `manifest/auto` (the
+  only valid request model — the router picks the provider); base URL via
+  `MANIFEST_BASE_URL` for self-hosted instances; a deterministic stub binds
+  under `NODE_ENV=test` so suites never call Manifest — there is **no runtime
   fallback**, a missing key fails closed). Answer **secrecy is enforced
   server-side**: the pure `buildSparkView` redacts the partner's text until
   both parents have answered (and a spectating child never sees it), and the
@@ -218,10 +220,11 @@ config path to set in the dashboard. Full walkthrough: `deploy/RAILWAY.md`.
    - `JWT_SECRET = <long random string>`  (**required** — app won't boot
      in production without it)
    - `JWT_EXPIRES_IN = 7d`  (optional; default `7d`)
-   - `OPENAI_API_KEY = sk-...`  (**required** for Spark generation — the
+   - `MANIFEST_API_KEY = mnfst_...`  (**required** for Spark generation — the
      "✨ New question" button + daily cron; no static fallback. The app still
-     boots and shows the seeded question without it.)
-   - `OPENAI_MODEL = gpt-4o-mini`  (optional; any Chat Completions model)
+     boots and shows the seeded question without it. Get one at app.manifest.build.)
+   - `MANIFEST_BASE_URL = https://app.manifest.build/v1`  (optional; only set
+     for a self-hosted Manifest instance, e.g. `http://manifest:2099/v1`.)
    - **Don't set `DB_SSL`** with the private `DATABASE_URL` — that network has
      no TLS and forcing it fails with "server does not support SSL". Set
      `DB_SSL=true` only if you switch to the public URL (`DATABASE_PUBLIC_URL`).
