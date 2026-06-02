@@ -12,7 +12,8 @@ import { AppModule } from '../src/app.module';
  * runs in CI with no Docker/Postgres. The bootstrap seeder reconciles the
  * `Home` family + two parents (Bruno, Audrey) from AUTH_USERS, so we log in
  * once and use the JWT — the server stamps "who" from the session, never the
- * request body.
+ * request body. Under NODE_ENV=test the auto-categorizer is bound to a
+ * deterministic stub, so we can assert auto-classification end-to-end.
  */
 describe('Groceries (e2e)', () => {
   let app: INestApplication;
@@ -50,6 +51,32 @@ describe('Groceries (e2e)', () => {
   afterAll(async () => {
     await app.close();
   });
+
+  /**
+   * Poll the snapshot until the named item has a categoryId, or the timeout
+   * elapses. Auto-categorization runs as a detached task after `addItem`
+   * returns, so the row arrives uncategorized and is updated a few ticks
+   * later. Polling is the most robust signal in an HTTP-level test.
+   */
+  async function waitForCategory(
+    name: string,
+    timeoutMs = 1000,
+  ): Promise<string | null> {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const snap = await request(app.getHttpServer())
+        .get(`/api/families/${familyId}/grocery-list`)
+        .set('Authorization', auth());
+      const row = snap.body.items.find(
+        (i: { name: string }) => i.name === name,
+      );
+      if (row && row.categoryId) {
+        return row.categoryId;
+      }
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    return null;
+  }
 
   it('exposes a public health probe', async () => {
     const res = await request(app.getHttpServer()).get('/api/health');
@@ -95,6 +122,17 @@ describe('Groceries (e2e)', () => {
     expect(res.status).toBe(400);
   });
 
+  it('rejects an add payload with a categoryId (auto-only on create)', async () => {
+    const res = await request(app.getHttpServer())
+      .post(`/api/grocery-lists/${listId}/items`)
+      .set('Authorization', auth())
+      .send({
+        name: 'Whatever',
+        categoryId: 'cafebabe-0000-0000-0000-000000000000',
+      });
+    expect(res.status).toBe(400);
+  });
+
   it('runs the full shopping flow: add → check → clear (stamped from the JWT)', async () => {
     const add = await request(app.getHttpServer())
       .post(`/api/grocery-lists/${listId}/items`)
@@ -103,6 +141,8 @@ describe('Groceries (e2e)', () => {
     expect(add.status).toBe(201);
     expect(add.body.name).toBe('Bananas');
     expect(add.body.addedById).toBe(memberId);
+    // Add returns immediately with no category — auto-categorization runs after.
+    expect(add.body.categoryId).toBeNull();
     const itemId = add.body.id;
 
     const toggle = await request(app.getHttpServer())
@@ -123,6 +163,48 @@ describe('Groceries (e2e)', () => {
       .get(`/api/families/${familyId}/grocery-list`)
       .set('Authorization', auth());
     expect(after.body.items).toEqual([]);
+  });
+
+  it('auto-categorizes a new item via the classifier port', async () => {
+    const add = await request(app.getHttpServer())
+      .post(`/api/grocery-lists/${listId}/items`)
+      .set('Authorization', auth())
+      .send({ name: 'Greek yogurt' });
+    expect(add.status).toBe(201);
+    expect(add.body.categoryId).toBeNull();
+
+    const categoryId = await waitForCategory('Greek yogurt');
+    expect(categoryId).not.toBeNull();
+
+    const snap = await request(app.getHttpServer())
+      .get(`/api/families/${familyId}/grocery-list`)
+      .set('Authorization', auth());
+    const dairy = snap.body.categories.find(
+      (c: { slug: string }) => c.slug === 'dairy',
+    );
+    expect(categoryId).toBe(dairy.id);
+  });
+
+  it('lets the user re-bucket an item via PATCH (the manual override)', async () => {
+    const add = await request(app.getHttpServer())
+      .post(`/api/grocery-lists/${listId}/items`)
+      .set('Authorization', auth())
+      .send({ name: 'Mystery jar' });
+    const itemId = add.body.id;
+
+    const snap = await request(app.getHttpServer())
+      .get(`/api/families/${familyId}/grocery-list`)
+      .set('Authorization', auth());
+    const pantry = snap.body.categories.find(
+      (c: { slug: string }) => c.slug === 'pantry',
+    );
+
+    const patch = await request(app.getHttpServer())
+      .patch(`/api/grocery-items/${itemId}`)
+      .set('Authorization', auth())
+      .send({ categoryId: pantry.id });
+    expect(patch.status).toBe(200);
+    expect(patch.body.categoryId).toBe(pantry.id);
   });
 
   it('updates then deletes an item', async () => {

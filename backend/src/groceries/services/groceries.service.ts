@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GroceryList } from '../entities/grocery-list.entity';
@@ -11,6 +11,10 @@ import {
 import { CreateGroceryItemDto } from '../dto/create-grocery-item.dto';
 import { UpdateGroceryItemDto } from '../dto/update-grocery-item.dto';
 import { GroceriesGateway } from '../gateways/groceries.gateway';
+import {
+  CATEGORY_CLASSIFIER,
+  ICategoryClassifier,
+} from '../categorizer/category-classifier';
 
 export interface ListSnapshot {
   list: GroceryList;
@@ -26,6 +30,8 @@ export interface ListSnapshot {
  */
 @Injectable()
 export class GroceriesService {
+  private readonly logger = new Logger(GroceriesService.name);
+
   constructor(
     @Inject(GROCERY_ITEM_REPOSITORY)
     private readonly items: IGroceryItemRepository,
@@ -33,6 +39,8 @@ export class GroceriesService {
     private readonly lists: Repository<GroceryList>,
     @InjectRepository(GroceryCategory)
     private readonly categories: Repository<GroceryCategory>,
+    @Inject(CATEGORY_CLASSIFIER)
+    private readonly classifier: ICategoryClassifier,
     private readonly gateway: GroceriesGateway,
   ) {}
 
@@ -50,6 +58,13 @@ export class GroceriesService {
     return { list, categories, items };
   }
 
+  /**
+   * Adds the item *immediately* with no category, then kicks off an async
+   * LLM classification in the background. The HTTP response and the
+   * `item_added` broadcast both return as fast as a single INSERT. When the
+   * classifier lands, the row is updated and a second `item_updated` event
+   * fans out to every connected device.
+   */
   async addItem(
     listId: string,
     dto: CreateGroceryItemDto,
@@ -62,10 +77,11 @@ export class GroceriesService {
       quantity: dto.quantity ?? 1,
       unit: dto.unit?.trim() || null,
       note: dto.note?.trim() || null,
-      categoryId: dto.categoryId ?? null,
+      categoryId: null,
       addedById: memberId,
     });
     this.gateway.emitItemAdded(item);
+    void this.categorizeInBackground(item);
     return item;
   }
 
@@ -76,6 +92,11 @@ export class GroceriesService {
     await this.requireItem(id);
     const updated = await this.items.update(id, { ...dto });
     this.gateway.emitItemUpdated(updated);
+    // The picker exposes "Re-categorize automatically" by sending `null` — kick
+    // a fresh classification off the back of that update.
+    if (dto.categoryId === null) {
+      void this.categorizeInBackground(updated);
+    }
     return updated;
   }
 
@@ -103,6 +124,41 @@ export class GroceriesService {
     const removedIds = await this.items.removeDoneByList(listId);
     this.gateway.emitCartCleared({ listId, removedIds });
     return removedIds;
+  }
+
+  /**
+   * Internal: classify the item via the LLM, persist the result, broadcast.
+   * Awaited in tests via the returned promise; in production it runs as a
+   * detached task from {@link addItem}. Any error is logged and swallowed —
+   * categorization is enhancement, never a blocker for the user.
+   */
+  async categorizeInBackground(item: GroceryItem): Promise<void> {
+    try {
+      const categories = await this.listCategories();
+      const slug = await this.classifier.classify({
+        name: item.name,
+        categories: categories.map((c) => ({
+          id: c.id,
+          slug: c.slug,
+          name: c.name,
+        })),
+      });
+      if (!slug) return;
+      const target = categories.find((c) => c.slug === slug);
+      if (!target) return;
+      // Re-read so the row's other fields aren't clobbered by a concurrent
+      // toggle/edit landing between the add and the classify.
+      const current = await this.items.findById(item.id);
+      if (!current || current.categoryId) return;
+      const updated = await this.items.update(item.id, {
+        categoryId: target.id,
+      });
+      this.gateway.emitItemUpdated(updated);
+    } catch (error) {
+      this.logger.warn(
+        `Background categorize failed for "${item.name}": ${describe(error)}`,
+      );
+    }
   }
 
   private async resolveDefaultList(familyId: string): Promise<GroceryList> {
@@ -133,4 +189,8 @@ export class GroceriesService {
     }
     return item;
   }
+}
+
+function describe(error: unknown): string {
+  return error instanceof Error ? error.message : 'Unknown error';
 }

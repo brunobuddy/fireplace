@@ -1,13 +1,15 @@
 import { type Component, For, Show, createSignal } from 'solid-js';
-import type { GroceryItem } from '@/lib/types';
+import type { GroceryCategory, GroceryItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 import { GroceryItemRow } from './GroceryItemRow';
 
 interface Props {
   cart: GroceryItem[];
+  categories: GroceryCategory[];
   onToggle: (item: GroceryItem) => void;
   onRemove: (item: GroceryItem) => void;
+  onMove: (item: GroceryItem, categoryId: string | null) => void;
   onClear: () => void;
 }
 
@@ -24,8 +26,10 @@ export const CartSummary: Component<Props> = (props) => {
               {(item) => (
                 <GroceryItemRow
                   item={item}
+                  categories={props.categories}
                   onToggle={props.onToggle}
                   onRemove={props.onRemove}
+                  onMove={props.onMove}
                 />
               )}
             </For>

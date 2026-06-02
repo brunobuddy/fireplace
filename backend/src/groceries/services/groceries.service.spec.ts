@@ -3,6 +3,7 @@ import { GroceriesService } from './groceries.service';
 import { IGroceryItemRepository } from '../repositories/grocery-item.repository';
 import { GroceryItem } from '../entities/grocery-item.entity';
 import { GroceriesGateway } from '../gateways/groceries.gateway';
+import { ICategoryClassifier } from '../categorizer/category-classifier';
 
 /** Builds a GroceryItem-shaped object without touching the DB. */
 const makeItem = (over: Partial<GroceryItem> = {}): GroceryItem =>
@@ -33,6 +34,7 @@ describe('GroceriesService', () => {
   >;
   let lists: { findOne: jest.Mock; create: jest.Mock; save: jest.Mock };
   let categories: { find: jest.Mock };
+  let classifier: jest.Mocked<ICategoryClassifier>;
   let service: GroceriesService;
 
   beforeEach(() => {
@@ -52,10 +54,12 @@ describe('GroceriesService', () => {
     };
     lists = { findOne: jest.fn(), create: jest.fn(), save: jest.fn() };
     categories = { find: jest.fn() };
+    classifier = { classify: jest.fn().mockResolvedValue(null) };
     service = new GroceriesService(
       items,
       lists as never,
       categories as never,
+      classifier,
       gateway as never,
     );
   });
@@ -65,6 +69,7 @@ describe('GroceriesService', () => {
       lists.findOne.mockResolvedValue({ id: 'list-1' });
       const created = makeItem({ name: 'Eggs', addedById: 'mem-1' });
       items.create.mockResolvedValue(created);
+      categories.find.mockResolvedValue([]);
 
       const result = await service.addItem(
         'list-1',
@@ -77,6 +82,7 @@ describe('GroceriesService', () => {
           name: 'Eggs',
           quantity: 1,
           listId: 'list-1',
+          categoryId: null,
           addedById: 'mem-1',
         }),
       );
@@ -90,6 +96,62 @@ describe('GroceriesService', () => {
         service.addItem('missing', { name: 'X' }, 'mem-1'),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(items.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('categorizeInBackground', () => {
+    const dairy = { id: 'cat-dairy', slug: 'dairy', name: 'Dairy & Eggs' };
+
+    it('classifies the item, persists the category and broadcasts an update', async () => {
+      categories.find.mockResolvedValue([dairy]);
+      classifier.classify.mockResolvedValue('dairy');
+      const fresh = makeItem({ name: 'Milk', categoryId: null });
+      items.findById.mockResolvedValue(fresh);
+      const updated = makeItem({ name: 'Milk', categoryId: 'cat-dairy' });
+      items.update.mockResolvedValue(updated);
+
+      await service.categorizeInBackground(fresh);
+
+      expect(classifier.classify).toHaveBeenCalledWith({
+        name: 'Milk',
+        categories: [{ id: dairy.id, slug: dairy.slug, name: dairy.name }],
+      });
+      expect(items.update).toHaveBeenCalledWith('item-1', {
+        categoryId: 'cat-dairy',
+      });
+      expect(gateway.emitItemUpdated).toHaveBeenCalledWith(updated);
+    });
+
+    it('no-ops when the classifier returns null', async () => {
+      categories.find.mockResolvedValue([dairy]);
+      classifier.classify.mockResolvedValue(null);
+
+      await service.categorizeInBackground(makeItem({ name: 'Mystery' }));
+
+      expect(items.update).not.toHaveBeenCalled();
+      expect(gateway.emitItemUpdated).not.toHaveBeenCalled();
+    });
+
+    it('no-ops when the row has been re-categorized in the meantime', async () => {
+      categories.find.mockResolvedValue([dairy]);
+      classifier.classify.mockResolvedValue('dairy');
+      items.findById.mockResolvedValue(
+        makeItem({ name: 'Milk', categoryId: 'cat-other' }),
+      );
+
+      await service.categorizeInBackground(makeItem({ name: 'Milk' }));
+
+      expect(items.update).not.toHaveBeenCalled();
+    });
+
+    it('swallows classifier errors so the user is never blocked', async () => {
+      categories.find.mockResolvedValue([dairy]);
+      classifier.classify.mockRejectedValue(new Error('boom'));
+
+      await expect(
+        service.categorizeInBackground(makeItem({ name: 'Milk' })),
+      ).resolves.toBeUndefined();
+      expect(items.update).not.toHaveBeenCalled();
     });
   });
 

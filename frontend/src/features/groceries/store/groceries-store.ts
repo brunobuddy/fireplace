@@ -32,14 +32,15 @@ interface State {
 export interface QuickAddInput {
   name: string;
   quantity?: number;
-  categoryId?: string;
 }
 
 /**
  * The reactive heart of the grocery feature: one source of truth that
  * applies optimistic local changes *and* merges real-time updates from
  * other devices (everything is idempotent by item id, so HTTP responses and
- * socket broadcasts converge without flicker).
+ * socket broadcasts converge without flicker). Categorization happens
+ * server-side after add, so the local optimistic row starts uncategorized
+ * and the socket flips it once the LLM has answered.
  */
 export function createGroceriesController(
   familyId: Accessor<string | undefined>,
@@ -120,7 +121,6 @@ export function createGroceriesController(
       const saved = await groceriesApi.addItem(state.listId, {
         name: input.name,
         quantity: input.quantity,
-        categoryId: input.categoryId,
       });
       setItems(upsert(removeById(state.items, temp.id), saved));
     } catch (err) {
@@ -172,6 +172,26 @@ export function createGroceriesController(
     }
   }
 
+  /**
+   * Manual re-categorize (drag-and-drop on desktop, picker tap on mobile).
+   * Optimistic, idempotent: if the row is already in `categoryId`, no-op.
+   */
+  async function move(
+    item: GroceryItem,
+    categoryId: string | null,
+  ): Promise<void> {
+    if (item.categoryId === categoryId) return;
+    const previous = item;
+    setItems(upsert(state.items, { ...item, categoryId }));
+    try {
+      const saved = await groceriesApi.updateItem(item.id, { categoryId });
+      setItems(upsert(state.items, saved));
+    } catch (err) {
+      setItems(upsert(state.items, previous));
+      setState('error', describe(err));
+    }
+  }
+
   // ---- derived view models ---------------------------------------------
   const groups = createMemo(() =>
     groupPendingByCategory(state.items, state.categories),
@@ -188,7 +208,7 @@ export function createGroceriesController(
     groups,
     cart,
     remaining,
-    actions: { addItem, toggle, remove, clearCart, reload, clearError },
+    actions: { addItem, toggle, remove, clearCart, move, reload, clearError },
   };
 }
 
@@ -205,7 +225,7 @@ function optimisticItem(
     note: null,
     status: 'pending',
     listId,
-    categoryId: input.categoryId ?? null,
+    categoryId: null,
     addedById: me.id,
     checkedById: null,
     addedBy: me,
