@@ -1,17 +1,33 @@
 import { type Component, Show } from 'solid-js';
-import type { GroceryItem } from '@/lib/types';
+import type { GroceryCategory, GroceryItem } from '@/lib/types';
 import { Avatar } from '@/shared/ui/Avatar';
 import { cn } from '@/lib/cn';
+import { CategoryChip } from './CategoryChip';
+import { DRAG_MIME, type DragPayload } from './drag';
 
 interface Props {
   item: GroceryItem;
+  categories: GroceryCategory[];
   onToggle: (item: GroceryItem) => void;
   onRemove: (item: GroceryItem) => void;
+  onMove: (item: GroceryItem, categoryId: string | null) => void;
 }
 
-/** One line on the list. Tapping the body checks it off; trash deletes. */
+/**
+ * One line on the list. Tapping the body checks it off; trash deletes. The
+ * category chip (right side) lets the user re-bucket by tap (mobile-friendly
+ * dropdown) or drag-and-drop (desktop — the whole row is a drag source; the
+ * target CategorySection accepts the drop).
+ */
 export const GroceryItemRow: Component<Props> = (props) => {
   const done = (): boolean => props.item.status === 'done';
+
+  const handleDragStart = (e: DragEvent): void => {
+    if (!e.dataTransfer) return;
+    const payload: DragPayload = { itemId: props.item.id };
+    e.dataTransfer.setData(DRAG_MIME, JSON.stringify(payload));
+    e.dataTransfer.effectAllowed = 'move';
+  };
 
   return (
     <li
@@ -19,6 +35,8 @@ export const GroceryItemRow: Component<Props> = (props) => {
         'flex animate-fade-in-up items-stretch overflow-hidden rounded-xl border border-border/60 bg-card shadow-cosy transition-all',
         done() && 'opacity-65',
       )}
+      draggable={!done()}
+      onDragStart={handleDragStart}
     >
       <button
         class="flex flex-1 items-center gap-3 px-3 py-3 text-left active:bg-muted/60"
@@ -73,6 +91,14 @@ export const GroceryItemRow: Component<Props> = (props) => {
           {(m) => <Avatar name={m().name} color={m().color} size="sm" />}
         </Show>
       </button>
+
+      <div class="flex items-center pr-1">
+        <CategoryChip
+          item={props.item}
+          categories={props.categories}
+          onMove={(categoryId) => props.onMove(props.item, categoryId)}
+        />
+      </div>
 
       <button
         class="flex items-center px-4 text-muted-foreground transition-colors active:bg-muted active:text-destructive"

@@ -69,12 +69,16 @@ export interface ListSnapshot {
   items: GroceryItem[];
 }
 
+/**
+ * The add-item payload. The category is intentionally not here — the server
+ * auto-categorizes via the LLM router. Users re-bucket via the per-row
+ * picker (or drag-and-drop) using the PATCH endpoint.
+ */
 export interface CreateItemInput {
   name: string;
   quantity?: number;
   unit?: string;
   note?: string;
-  categoryId?: string;
 }
 
 export type TodoCriticality = 'low' | 'medium' | 'high';

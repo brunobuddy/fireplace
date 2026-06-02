@@ -38,10 +38,7 @@ export const GroceryListView: Component = () => {
           </div>
         }
       >
-        <AddItemBar
-          categories={ctrl.state.categories}
-          onAdd={(input) => void ctrl.actions.addItem(input)}
-        />
+        <AddItemBar onAdd={(input) => void ctrl.actions.addItem(input)} />
         <ErrorToast
           message={ctrl.state.error}
           onDismiss={() => ctrl.actions.clearError()}
@@ -68,8 +65,11 @@ export const GroceryListView: Component = () => {
             {(group) => (
               <CategorySection
                 group={group}
+                categories={ctrl.state.categories}
+                items={ctrl.state.items}
                 onToggle={(i) => void ctrl.actions.toggle(i)}
                 onRemove={(i) => void ctrl.actions.remove(i)}
+                onMove={(i, c) => void ctrl.actions.move(i, c)}
               />
             )}
           </For>
@@ -83,8 +83,10 @@ export const GroceryListView: Component = () => {
 
         <CartSummary
           cart={ctrl.cart()}
+          categories={ctrl.state.categories}
           onToggle={(i) => void ctrl.actions.toggle(i)}
           onRemove={(i) => void ctrl.actions.remove(i)}
+          onMove={(i, c) => void ctrl.actions.move(i, c)}
           onClear={() => void ctrl.actions.clearCart()}
         />
       </Show>
