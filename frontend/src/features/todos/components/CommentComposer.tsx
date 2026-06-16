@@ -44,16 +44,16 @@ export const CommentComposer: Component<Props> = (props) => {
           value={body()}
           onInput={(e) => setBody(e.currentTarget.value)}
           onKeyDown={onKeyDown}
-          placeholder="Add a comment…"
+          placeholder="Ajouter un commentaire…"
           enterkeyhint="send"
-          aria-label="Write a comment"
+          aria-label="Écrire un commentaire"
           class="max-h-28 flex-1"
         />
         <Button
           type="submit"
           size="icon"
           disabled={!body().trim()}
-          aria-label="Send comment"
+          aria-label="Envoyer le commentaire"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
             <path d="M4 12l16-8-6 16-2.5-6.5L4 12z" fill="currentColor" />

@@ -43,7 +43,7 @@ export const TodoItemRow: Component<Props> = (props) => {
           class="flex min-h-[3.5rem] items-center justify-center pl-3.5 pr-2 active:bg-muted/60"
           onClick={() => props.actions.onToggle(props.todo)}
           aria-pressed={done()}
-          aria-label={`${done() ? 'Mark not done' : 'Mark done'}: ${props.todo.title}`}
+          aria-label={`${done() ? 'Marquer comme non fait' : 'Marquer comme fait'} : ${props.todo.title}`}
         >
           <span
             class={cn(
@@ -72,7 +72,7 @@ export const TodoItemRow: Component<Props> = (props) => {
           onClick={() => props.onToggleExpand()}
           aria-expanded={props.expanded}
           aria-controls={panelId()}
-          aria-label={`${props.expanded ? 'Collapse' : 'Open'} ${props.todo.title}`}
+          aria-label={`${props.expanded ? 'Réduire' : 'Ouvrir'} ${props.todo.title}`}
         >
           <span class="flex min-w-0 flex-1 flex-col gap-0.5">
             <span
@@ -92,7 +92,7 @@ export const TodoItemRow: Component<Props> = (props) => {
             <Show when={done() && props.todo.completedBy}>
               {(m) => (
                 <span class="truncate text-xs text-muted-foreground">
-                  Done by {m().name}
+                  Fait par {m().name}
                   {props.todo.completedAt
                     ? ` · ${relativeTime(props.todo.completedAt)}`
                     : ''}
@@ -105,7 +105,7 @@ export const TodoItemRow: Component<Props> = (props) => {
             <Show when={comments() > 0}>
               <span
                 class="inline-flex items-center gap-0.5 text-xs font-bold text-muted-foreground"
-                aria-label={`${comments()} ${comments() === 1 ? 'comment' : 'comments'}`}
+                aria-label={`${comments()} ${comments() === 1 ? 'commentaire' : 'commentaires'}`}
               >
                 <span aria-hidden="true">💬</span> {comments()}
               </span>
@@ -130,7 +130,7 @@ export const TodoItemRow: Component<Props> = (props) => {
         <div
           id={panelId()}
           role="region"
-          aria-label={`${props.todo.title} details`}
+          aria-label={`Détails de ${props.todo.title}`}
           class="animate-fade-in-up border-t border-border/60 px-4 pb-3 pt-3"
         >
           <TodoDetailPanel
@@ -140,7 +140,7 @@ export const TodoItemRow: Component<Props> = (props) => {
           />
           <div class="my-3 border-t border-border/60" />
           <h3 class="mb-2 font-display text-xs font-extrabold uppercase tracking-wide text-muted-foreground">
-            Comments
+            Commentaires
           </h3>
           <CommentThread
             todo={props.todo}

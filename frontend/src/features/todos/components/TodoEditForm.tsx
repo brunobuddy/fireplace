@@ -41,13 +41,13 @@ export const TodoEditForm: Component<Props> = (props) => {
   return (
     <form class="flex flex-col gap-3" onSubmit={save}>
       <TextField value={title()} onChange={setTitle}>
-        <TextFieldInput aria-label="Title" placeholder="Title" />
+        <TextFieldInput aria-label="Titre" placeholder="Titre" />
       </TextField>
       <Textarea
         rows={3}
         value={description()}
         onInput={(e) => setDescription(e.currentTarget.value)}
-        placeholder="Add a description (optional)…"
+        placeholder="Ajouter une description (facultatif)…"
         aria-label="Description"
       />
       <CriticalitySegmented value={criticality()} onChange={setCriticality} />
@@ -58,10 +58,10 @@ export const TodoEditForm: Component<Props> = (props) => {
           class="flex-1"
           onClick={() => props.onCancel()}
         >
-          Cancel
+          Annuler
         </Button>
         <Button type="submit" class="flex-1" disabled={!title().trim()}>
-          Save
+          Enregistrer
         </Button>
       </div>
     </form>

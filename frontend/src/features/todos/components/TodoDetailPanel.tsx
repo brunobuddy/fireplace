@@ -47,7 +47,7 @@ export const TodoDetailPanel: Component<Props> = (props) => {
 
       <div class="mt-3">
         <CriticalitySegmented
-          label="Change priority"
+          label="Changer la priorité"
           value={props.todo.criticality}
           onChange={(c: TodoCriticality) =>
             props.onEdit(props.todo, { criticality: c })
@@ -60,7 +60,7 @@ export const TodoDetailPanel: Component<Props> = (props) => {
         fallback={
           <div class="mt-3 flex items-center gap-2 rounded-lg bg-muted/60 p-2">
             <span class="px-1 text-xs font-semibold text-muted-foreground">
-              Delete for everyone?
+              Supprimer pour tout le monde ?
             </span>
             <Button
               size="sm"
@@ -68,14 +68,14 @@ export const TodoDetailPanel: Component<Props> = (props) => {
               class="ml-auto"
               onClick={() => setConfirming(false)}
             >
-              Keep it
+              Garder
             </Button>
             <Button
               size="sm"
               variant="destructive"
               onClick={() => props.onDelete(props.todo)}
             >
-              Delete
+              Supprimer
             </Button>
           </div>
         }
@@ -87,7 +87,7 @@ export const TodoDetailPanel: Component<Props> = (props) => {
             class="flex-1"
             onClick={() => setEditing(true)}
           >
-            ✏️ Edit
+            ✏️ Modifier
           </Button>
           <Button
             variant="ghost"
@@ -95,7 +95,7 @@ export const TodoDetailPanel: Component<Props> = (props) => {
             class="flex-1 text-destructive"
             onClick={() => setConfirming(true)}
           >
-            🗑 Delete
+            🗑 Supprimer
           </Button>
         </div>
       </Show>
@@ -110,8 +110,8 @@ const Provenance: Component<{ todo: Todo }> = (props) => (
         {(m) => <Avatar name={m().name} color={m().color} size="sm" />}
       </Show>
       <span>
-        Added by{' '}
-        <b class="text-foreground">{props.todo.createdBy?.name ?? 'someone'}</b>{' '}
+        Ajouté par{' '}
+        <b class="text-foreground">{props.todo.createdBy?.name ?? 'quelqu’un'}</b>{' '}
         · {relativeTime(props.todo.createdAt)}
       </span>
     </div>
@@ -120,7 +120,7 @@ const Provenance: Component<{ todo: Todo }> = (props) => (
         <div class="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
           <Avatar name={m().name} color={m().color} size="sm" />
           <span>
-            Completed by <b class="text-foreground">{m().name}</b>
+            Terminé par <b class="text-foreground">{m().name}</b>
             {props.todo.completedAt
               ? ` · ${relativeTime(props.todo.completedAt)}`
               : ''}

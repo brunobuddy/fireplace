@@ -42,7 +42,7 @@ export const GroceryItemRow: Component<Props> = (props) => {
         class="flex flex-1 items-center gap-3 px-3 py-3 text-left active:bg-muted/60"
         onClick={() => props.onToggle(props.item)}
         aria-pressed={done()}
-        aria-label={`${done() ? 'Uncheck' : 'Check off'} ${props.item.name}`}
+        aria-label={`${done() ? 'Décocher' : 'Cocher'} ${props.item.name}`}
       >
         <span
           class={cn(
@@ -103,7 +103,7 @@ export const GroceryItemRow: Component<Props> = (props) => {
       <button
         class="flex items-center px-4 text-muted-foreground transition-colors active:bg-muted active:text-destructive"
         onClick={() => props.onRemove(props.item)}
-        aria-label={`Remove ${props.item.name}`}
+        aria-label={`Retirer ${props.item.name}`}
       >
         <svg viewBox="0 0 24 24" width="18" height="18">
           <path

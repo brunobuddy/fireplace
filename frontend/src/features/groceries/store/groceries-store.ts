@@ -235,5 +235,5 @@ function optimisticItem(
 }
 
 function describe(err: unknown): string {
-  return err instanceof Error ? err.message : 'Something went wrong';
+  return err instanceof Error ? err.message : 'Une erreur est survenue';
 }

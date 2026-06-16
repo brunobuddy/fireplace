@@ -91,7 +91,7 @@ describe('AuthService', () => {
       membersWith([bruno]),
     );
     await expect(svc.login('bruno@x.io', 'wrong')).rejects.toThrow(
-      'Invalid email or password',
+      'E-mail ou mot de passe incorrect',
     );
   });
 

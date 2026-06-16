@@ -15,7 +15,7 @@ export class StubQuestionGenerator implements IQuestionGenerator {
   generate(): Promise<string> {
     this.counter += 1;
     return Promise.resolve(
-      `What is a small thing you appreciated about each other recently? (#${this.counter})`,
+      `Quelle petite chose avez-vous appréciée l’un chez l’autre récemment ? (#${this.counter})`,
     );
   }
 }

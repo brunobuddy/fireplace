@@ -24,7 +24,7 @@ export class FamilyService {
   async findFamily(id: string): Promise<Family> {
     const family = await this.families.findOne({ where: { id } });
     if (!family) {
-      throw new NotFoundException(`Family ${id} not found`);
+      throw new NotFoundException(`Famille ${id} introuvable`);
     }
     return family;
   }

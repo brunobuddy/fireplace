@@ -32,8 +32,8 @@ export const CategoryChip: Component<Props> = (props) => {
         type="button"
         aria-label={
           current()
-            ? `Change category (currently ${current()!.name})`
-            : 'Set category'
+            ? `Changer de catégorie (actuellement ${current()!.name})`
+            : 'Définir la catégorie'
         }
         class={cn(
           'flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-1 text-[0.68rem] font-bold transition-colors',
@@ -48,7 +48,7 @@ export const CategoryChip: Component<Props> = (props) => {
           fallback={
             <>
               <span aria-hidden="true">✨</span>
-              <span>Categorizing…</span>
+              <span>Classement…</span>
             </>
           }
         >
@@ -81,7 +81,7 @@ export const CategoryChip: Component<Props> = (props) => {
           class="border-t border-border/60 text-muted-foreground"
         >
           <span aria-hidden="true">✨</span>
-          <span>Re-categorize automatically</span>
+          <span>Reclasser automatiquement</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

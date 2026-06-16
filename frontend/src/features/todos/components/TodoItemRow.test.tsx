@@ -54,8 +54,8 @@ describe('<TodoItemRow>', () => {
       />
     ));
     expect(getByText('Book the dentist')).toBeInTheDocument();
-    expect(getByText(/High/)).toBeInTheDocument();
-    expect(getByLabelText('1 comment')).toBeInTheDocument();
+    expect(getByText(/Haute/)).toBeInTheDocument();
+    expect(getByLabelText('1 commentaire')).toBeInTheDocument();
   });
 
   it('hides the pill for low criticality', () => {
@@ -69,7 +69,7 @@ describe('<TodoItemRow>', () => {
         actions={stubActions()}
       />
     ));
-    expect(queryByText(/Low/)).toBeNull();
+    expect(queryByText(/Basse/)).toBeNull();
   });
 
   it('toggles done via the checkbox and expands via the body', () => {
@@ -84,9 +84,9 @@ describe('<TodoItemRow>', () => {
         actions={actions}
       />
     ));
-    fireEvent.click(getByLabelText('Mark done: Book the dentist'));
+    fireEvent.click(getByLabelText('Marquer comme fait : Book the dentist'));
     expect(actions.onToggle).toHaveBeenCalledWith(base);
-    fireEvent.click(getByLabelText('Open Book the dentist'));
+    fireEvent.click(getByLabelText('Ouvrir Book the dentist'));
     expect(onToggleExpand).toHaveBeenCalled();
   });
 
@@ -100,6 +100,6 @@ describe('<TodoItemRow>', () => {
         actions={stubActions()}
       />
     ));
-    expect(getByLabelText('Write a comment')).toBeInTheDocument();
+    expect(getByLabelText('Écrire un commentaire')).toBeInTheDocument();
   });
 });

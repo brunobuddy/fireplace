@@ -28,7 +28,7 @@ export const DoneSection: Component<Props> = (props) => {
           ✅
         </span>
         <h2 class="font-display text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
-          Done
+          Terminées
         </h2>
         <Badge variant="muted" size="sm" class="ml-auto">
           {props.todos.length}

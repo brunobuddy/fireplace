@@ -1,8 +1,8 @@
 {
-  "name": "Fireplace — Family Home",
+  "name": "Fireplace — Maison de famille",
   "short_name": "Fireplace",
-  "description": "The shared home for your family — a live grocery list today, agenda and chat to come.",
-  "lang": "en",
+  "description": "La maison partagée de votre famille — une liste de courses en temps réel aujourd’hui, agenda et discussions à venir.",
+  "lang": "fr",
   "dir": "ltr",
   "id": "/",
   "start_url": "/",

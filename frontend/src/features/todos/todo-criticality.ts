@@ -19,7 +19,7 @@ export interface CriticalityMeta {
 export const CRITICALITY: Record<TodoCriticality, CriticalityMeta> = {
   high: {
     value: 'high',
-    label: 'High',
+    label: 'Haute',
     icon: '🔥',
     badge: 'default',
     bar: 'before:bg-primary',
@@ -27,7 +27,7 @@ export const CRITICALITY: Record<TodoCriticality, CriticalityMeta> = {
   },
   medium: {
     value: 'medium',
-    label: 'Medium',
+    label: 'Moyenne',
     icon: '☀️',
     badge: 'accent',
     bar: 'before:bg-accent',
@@ -35,7 +35,7 @@ export const CRITICALITY: Record<TodoCriticality, CriticalityMeta> = {
   },
   low: {
     value: 'low',
-    label: 'Low',
+    label: 'Basse',
     icon: '🌱',
     badge: 'muted',
     bar: 'before:bg-border',

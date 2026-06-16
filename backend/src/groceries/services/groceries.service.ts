@@ -170,14 +170,14 @@ export class GroceriesService {
       return existing;
     }
     return this.lists.save(
-      this.lists.create({ familyId, name: 'Shopping list' }),
+      this.lists.create({ familyId, name: 'Liste de courses' }),
     );
   }
 
   private async requireList(listId: string): Promise<GroceryList> {
     const list = await this.lists.findOne({ where: { id: listId } });
     if (!list) {
-      throw new NotFoundException(`Grocery list ${listId} not found`);
+      throw new NotFoundException(`Liste de courses ${listId} introuvable`);
     }
     return list;
   }
@@ -185,7 +185,7 @@ export class GroceriesService {
   private async requireItem(id: string): Promise<GroceryItem> {
     const item = await this.items.findById(id);
     if (!item) {
-      throw new NotFoundException(`Grocery item ${id} not found`);
+      throw new NotFoundException(`Article ${id} introuvable`);
     }
     return item;
   }

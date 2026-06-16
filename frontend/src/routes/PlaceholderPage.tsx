@@ -10,8 +10,9 @@ export const PlaceholderPage: Component<{ title: string; icon: string }> = (
     </div>
     <h1 class="font-display text-xl font-extrabold">{props.title}</h1>
     <p class="mt-2 max-w-[32ch] text-sm leading-relaxed text-muted-foreground">
-      Coming soon — a cosy spot for the family {props.title.toLowerCase()},
-      built on the same warm foundation as the grocery list. 🏡
+      Bientôt disponible — l’espace « {props.title.toLowerCase()} » de la
+      famille arrive, bâti sur les mêmes fondations chaleureuses que la liste de
+      courses. 🏡
     </p>
   </div>
 );

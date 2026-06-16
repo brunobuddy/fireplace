@@ -25,7 +25,7 @@ export const GroceryListView: Component = () => {
   return (
     <Show
       when={ctrl.state.status !== 'loading'}
-      fallback={<Spinner label="Warming up your list…" />}
+      fallback={<Spinner label="Préparation de ta liste…" />}
     >
       <Show
         when={ctrl.state.status !== 'error'}
@@ -33,7 +33,7 @@ export const GroceryListView: Component = () => {
           <div class="flex flex-col items-center gap-3 px-4 py-16 text-center">
             <p class="font-semibold text-destructive">{ctrl.state.error}</p>
             <Button onClick={() => void ctrl.actions.reload()}>
-              Try again
+              Réessayer
             </Button>
           </div>
         }
@@ -48,7 +48,7 @@ export const GroceryListView: Component = () => {
           <div class="mb-5 flex items-center gap-3 px-1">
             <Progress value={progress()} />
             <span class="whitespace-nowrap text-xs font-extrabold text-muted-foreground">
-              {ctrl.cart().length}/{total()} in basket
+              {ctrl.cart().length}/{total()} dans le panier
             </span>
           </div>
         </Show>
@@ -77,7 +77,7 @@ export const GroceryListView: Component = () => {
 
         <Show when={ctrl.remaining() === 0 && ctrl.cart().length > 0}>
           <div class="animate-pop-in py-10 text-center font-display text-lg font-extrabold text-success">
-            🎉 All picked up!
+            🎉 Tout est dans le panier !
           </div>
         </Show>
 

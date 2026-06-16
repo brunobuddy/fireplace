@@ -26,8 +26,14 @@ const item: GroceryItem = {
 };
 
 const categories: GroceryCategory[] = [
-  { id: 'c1', slug: 'produce', name: 'Fruit & Veg', icon: '🥬', sortOrder: 10 },
-  { id: 'c2', slug: 'dairy', name: 'Dairy & Eggs', icon: '🧀', sortOrder: 40 },
+  {
+    id: 'c1',
+    slug: 'produce',
+    name: 'Fruits & Légumes',
+    icon: '🥬',
+    sortOrder: 10,
+  },
+  { id: 'c2', slug: 'dairy', name: 'Crèmerie & Œufs', icon: '🧀', sortOrder: 40 },
 ];
 
 describe('<GroceryItemRow>', () => {
@@ -48,7 +54,7 @@ describe('<GroceryItemRow>', () => {
     expect(getByText('ripe')).toBeInTheDocument();
   });
 
-  it('shows the "Categorizing…" pill while the item has no category', () => {
+  it('shows the "Classement…" pill while the item has no category', () => {
     const { getByText } = render(() => (
       <GroceryItemRow
         item={item}
@@ -58,7 +64,7 @@ describe('<GroceryItemRow>', () => {
         onMove={noop}
       />
     ));
-    expect(getByText('Categorizing…')).toBeInTheDocument();
+    expect(getByText('Classement…')).toBeInTheDocument();
   });
 
   it('shows the category name once the item is categorized', () => {
@@ -72,7 +78,7 @@ describe('<GroceryItemRow>', () => {
         onMove={noop}
       />
     ));
-    expect(getByText('Fruit & Veg')).toBeInTheDocument();
+    expect(getByText('Fruits & Légumes')).toBeInTheDocument();
   });
 
   it('toggles when the body is tapped', () => {
@@ -86,7 +92,7 @@ describe('<GroceryItemRow>', () => {
         onMove={noop}
       />
     ));
-    fireEvent.click(getByLabelText('Check off Bananas'));
+    fireEvent.click(getByLabelText('Cocher Bananas'));
     expect(onToggle).toHaveBeenCalledWith(item);
   });
 
@@ -101,7 +107,7 @@ describe('<GroceryItemRow>', () => {
         onMove={noop}
       />
     ));
-    fireEvent.click(getByLabelText('Remove Bananas'));
+    fireEvent.click(getByLabelText('Retirer Bananas'));
     expect(onRemove).toHaveBeenCalledWith(item);
   });
 });

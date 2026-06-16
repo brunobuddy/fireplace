@@ -65,7 +65,7 @@ export const CategorySection: Component<Props> = (props) => {
           {props.group.category?.icon ?? '🛒'}
         </span>
         <h2 class="font-display text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
-          {props.group.category?.name ?? 'Uncategorised'}
+          {props.group.category?.name ?? 'Non classé'}
         </h2>
         <Badge variant="muted" size="sm" class="ml-auto">
           {props.group.items.length}
