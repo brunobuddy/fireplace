@@ -13,11 +13,16 @@ describe('<ErrorToast>', () => {
   it('shows the message and calls onDismiss when closed', () => {
     const onDismiss = vi.fn();
     const { getByRole } = render(() => (
-      <ErrorToast message="Couldn’t reach the server" onDismiss={onDismiss} />
+      <ErrorToast
+        message="Impossible de joindre le serveur"
+        onDismiss={onDismiss}
+      />
     ));
 
-    expect(getByRole('alert')).toHaveTextContent('Couldn’t reach the server');
-    fireEvent.click(getByRole('button', { name: /dismiss/i }));
+    expect(getByRole('alert')).toHaveTextContent(
+      'Impossible de joindre le serveur',
+    );
+    fireEvent.click(getByRole('button', { name: /fermer/i }));
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 });

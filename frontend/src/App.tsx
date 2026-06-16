@@ -28,7 +28,7 @@ const AuthenticatedApp: Component = () => (
       />
       <Route
         path="/chat"
-        component={() => <PlaceholderPage title="Chat" icon="💬" />}
+        component={() => <PlaceholderPage title="Discussion" icon="💬" />}
       />
       <Route path="*" component={() => <Navigate href="/groceries" />} />
     </Router>

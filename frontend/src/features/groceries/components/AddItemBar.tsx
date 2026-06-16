@@ -39,22 +39,22 @@ export const AddItemBar: Component<Props> = (props) => {
           <TextFieldInput
             ref={input}
             type="text"
-            placeholder="Add an item…"
+            placeholder="Ajouter un article…"
             enterkeyhint="done"
-            aria-label="Item name"
+            aria-label="Nom de l’article"
           />
         </TextField>
 
         <div
           class="flex items-center gap-1 rounded-lg border border-border bg-card px-2 shadow-cosy"
           role="group"
-          aria-label="Quantity"
+          aria-label="Quantité"
         >
           <button
             type="button"
             class="h-full w-7 text-lg font-extrabold text-muted-foreground active:text-foreground"
             onClick={() => setQty((q) => Math.max(1, q - 1))}
-            aria-label="Decrease quantity"
+            aria-label="Diminuer la quantité"
           >
             −
           </button>
@@ -68,14 +68,14 @@ export const AddItemBar: Component<Props> = (props) => {
             type="button"
             class="h-full w-7 text-lg font-extrabold text-muted-foreground active:text-foreground"
             onClick={() => setQty((q) => Math.min(99, q + 1))}
-            aria-label="Increase quantity"
+            aria-label="Augmenter la quantité"
           >
             +
           </button>
         </div>
 
-        <Button type="submit" disabled={!name().trim()} aria-label="Add item">
-          Add
+        <Button type="submit" disabled={!name().trim()} aria-label="Ajouter l’article">
+          Ajouter
         </Button>
       </div>
     </form>

@@ -35,13 +35,13 @@ export const AddTodoBar: Component<Props> = (props) => {
           <TextFieldInput
             ref={input}
             type="text"
-            placeholder="Add a to-do…"
+            placeholder="Ajouter une tâche…"
             enterkeyhint="done"
-            aria-label="To-do title"
+            aria-label="Titre de la tâche"
           />
         </TextField>
-        <Button type="submit" disabled={!title().trim()} aria-label="Add to-do">
-          Add
+        <Button type="submit" disabled={!title().trim()} aria-label="Ajouter la tâche">
+          Ajouter
         </Button>
       </div>
       <div class="pt-3">

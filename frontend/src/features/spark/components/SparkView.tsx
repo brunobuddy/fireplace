@@ -39,7 +39,7 @@ export const SparkView: Component = () => {
   return (
     <Show
       when={ctrl.state.status !== 'loading'}
-      fallback={<Spinner label="Lighting the spark…" />}
+      fallback={<Spinner label="On prépare Spark…" />}
     >
       <Show
         when={ctrl.state.status !== 'error'}

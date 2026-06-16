@@ -41,7 +41,7 @@ export const TodoListView: Component = () => {
   return (
     <Show
       when={ctrl.state.status !== 'loading'}
-      fallback={<Spinner label="Warming up your to-dos…" />}
+      fallback={<Spinner label="Préparation de tes tâches…" />}
     >
       <Show
         when={ctrl.state.status !== 'error'}
@@ -49,7 +49,7 @@ export const TodoListView: Component = () => {
           <div class="flex flex-col items-center gap-3 px-4 py-16 text-center">
             <p class="font-semibold text-destructive">{ctrl.state.error}</p>
             <Button onClick={() => void ctrl.actions.reload()}>
-              Try again
+              Réessayer
             </Button>
           </div>
         }
@@ -75,7 +75,7 @@ export const TodoListView: Component = () => {
 
           <Show when={ctrl.open() === 0 && ctrl.done().length > 0}>
             <div class="animate-pop-in py-8 text-center font-display text-lg font-extrabold text-success">
-              🎉 All done — nice work, team!
+              🎉 Tout est fait — beau travail, l’équipe !
             </div>
           </Show>
 
@@ -99,10 +99,10 @@ const EmptyTodos: Component = () => (
     <div class="mb-3 text-6xl" aria-hidden="true">
       📝
     </div>
-    <h2 class="font-display text-lg font-extrabold">Nothing to do… for now</h2>
+    <h2 class="font-display text-lg font-extrabold">Rien à faire… pour l’instant</h2>
     <p class="mt-2 max-w-[30ch] text-sm leading-relaxed text-muted-foreground">
-      Add the first thing your family needs to get done — everyone sees it the
-      moment you do. 🏡
+      Ajoute la première chose à faire pour ta famille — tout le monde la voit
+      dès que tu l’ajoutes. 🏡
     </p>
   </div>
 );

@@ -7,8 +7,9 @@ import { Avatar } from '@/shared/ui/Avatar';
 /** One-line intro under the page header. */
 export const SparkIntro: Component = () => (
   <p class="text-sm leading-relaxed text-muted-foreground">
-    A daily question, just for the two of you. Answer in private — you’ll each
-    see the other’s reply only once you’ve both answered. ✨
+    Une question par jour, rien que pour vous deux. Répondez en secret — vous
+    découvrirez la réponse de l’autre seulement une fois que vous aurez tous les
+    deux répondu. ✨
   </p>
 );
 
@@ -18,7 +19,7 @@ export const SparkError: Component<{
 }> = (props) => (
   <div class="flex flex-col items-center gap-3 px-4 py-16 text-center">
     <p class="font-semibold text-destructive">{props.message}</p>
-    <Button onClick={() => props.onRetry()}>Try again</Button>
+    <Button onClick={() => props.onRetry()}>Réessayer</Button>
   </div>
 );
 
@@ -30,9 +31,9 @@ export const EmptyState: Component<{
     <div class="mb-3 text-6xl" aria-hidden="true">
       ✨
     </div>
-    <h2 class="font-display text-lg font-extrabold">No question yet</h2>
+    <h2 class="font-display text-lg font-extrabold">Pas encore de question</h2>
     <p class="mt-2 max-w-[30ch] text-sm leading-relaxed text-muted-foreground">
-      Spark a fresh question for the two of you to answer.
+      Lancez une nouvelle question à laquelle répondre tous les deux.
     </p>
     <Button
       class="mt-4"
@@ -40,7 +41,7 @@ export const EmptyState: Component<{
       disabled={props.generating}
       onClick={() => props.onNew()}
     >
-      {props.generating ? 'Conjuring a question…' : '✨ New question'}
+      {props.generating ? 'Création d’une question…' : '✨ Nouvelle question'}
     </Button>
   </div>
 );
@@ -51,7 +52,9 @@ export const WaitingNote: Component<{
 }> = (props) => (
   <div class="flex flex-col gap-3">
     <Card class="border-success/40 bg-success/5 p-4">
-      <p class="text-sm font-bold text-success">Your answer is locked in 🔒</p>
+      <p class="text-sm font-bold text-success">
+        Ta réponse est enregistrée 🔒
+      </p>
       <Show when={props.me?.text}>
         {(text) => (
           <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
@@ -61,9 +64,9 @@ export const WaitingNote: Component<{
       </Show>
     </Card>
     <p class="text-center text-sm leading-relaxed text-muted-foreground">
-      Waiting for{' '}
-      <b class="text-foreground">{props.partner?.name ?? 'your partner'}</b> to
-      answer — you’ll both see each other’s answers then. ✨
+      En attente de la réponse de{' '}
+      <b class="text-foreground">{props.partner?.name ?? 'ton partenaire'}</b> —
+      vous verrez alors vos réponses respectives. ✨
     </p>
   </div>
 );
@@ -74,7 +77,7 @@ export const SpectatorNote: Component<{
   <div class="flex flex-col gap-3">
     <Card class="p-4 text-center">
       <p class="text-sm leading-relaxed text-muted-foreground">
-        This one’s just for the grown-ups 💞
+        Celle-ci, c’est rien que pour les grands 💞
       </p>
     </Card>
     <div class="flex items-center justify-center gap-6">
@@ -83,7 +86,7 @@ export const SpectatorNote: Component<{
           <div class="flex flex-col items-center gap-1.5">
             <Avatar name={participant.name} color={participant.color} />
             <span class="text-xs font-semibold text-muted-foreground">
-              {participant.hasAnswered ? 'answered 🔒' : 'thinking…'}
+              {participant.hasAnswered ? 'a répondu 🔒' : 'réfléchit…'}
             </span>
           </div>
         )}
@@ -104,7 +107,7 @@ export const NewQuestionButton: Component<{
       fallback={
         <div class="flex items-center gap-2 rounded-lg bg-muted/60 p-2">
           <span class="px-1 text-xs font-semibold text-muted-foreground">
-            Start a new question? This clears the current answer.
+            Lancer une nouvelle question ? Cela effacera la réponse actuelle.
           </span>
           <Button
             size="sm"
@@ -112,7 +115,7 @@ export const NewQuestionButton: Component<{
             class="ml-auto"
             onClick={() => setConfirming(false)}
           >
-            Keep it
+            Garder
           </Button>
           <Button
             size="sm"
@@ -123,7 +126,7 @@ export const NewQuestionButton: Component<{
               setConfirming(false);
             }}
           >
-            New one
+            Nouvelle
           </Button>
         </div>
       }
@@ -136,7 +139,7 @@ export const NewQuestionButton: Component<{
           props.needsConfirm ? setConfirming(true) : props.onNew()
         }
       >
-        {props.generating ? 'Conjuring a question…' : '✨ New question'}
+        {props.generating ? 'Création d’une question…' : '✨ Nouvelle question'}
       </Button>
     </Show>
   );

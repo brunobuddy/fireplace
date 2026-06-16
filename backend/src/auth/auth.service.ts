@@ -47,7 +47,7 @@ export class AuthService {
     password: string,
   ): Promise<{ token: string; user: AuthUser }> {
     if (!this.credentialsOk(email, password)) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('E-mail ou mot de passe incorrect');
     }
     const member = await this.members.findOne({
       where: { email: email.trim().toLowerCase() },
@@ -55,7 +55,7 @@ export class AuthService {
     if (!member) {
       // Credentials matched but no member row exists yet — the seeder runs on
       // boot, so this only happens if AUTH_USERS was changed without a restart.
-      throw new UnauthorizedException('No member profile for that email');
+      throw new UnauthorizedException('Aucun profil de membre pour cet e-mail');
     }
     const user = toAuthUser(member);
     const payload: JwtPayload = { sub: user.memberId, ...user };

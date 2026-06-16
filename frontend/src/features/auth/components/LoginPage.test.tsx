@@ -15,11 +15,13 @@ describe('<LoginPage>', () => {
     login.mockResolvedValue(undefined);
     const { getByLabelText, getByRole } = render(() => <LoginPage />);
 
-    fireEvent.input(getByLabelText('Email'), {
+    fireEvent.input(getByLabelText('E-mail'), {
       target: { value: '  a@x.io ' },
     });
-    fireEvent.input(getByLabelText('Password'), { target: { value: 'pw' } });
-    fireEvent.click(getByRole('button', { name: /sign in/i }));
+    fireEvent.input(getByLabelText('Mot de passe'), {
+      target: { value: 'pw' },
+    });
+    fireEvent.click(getByRole('button', { name: /se connecter/i }));
 
     await waitFor(() => expect(login).toHaveBeenCalledWith('a@x.io', 'pw'));
     await flush();
@@ -32,12 +34,14 @@ describe('<LoginPage>', () => {
       <LoginPage />
     ));
 
-    fireEvent.input(getByLabelText('Email'), { target: { value: 'a@x.io' } });
-    fireEvent.input(getByLabelText('Password'), { target: { value: 'wrong' } });
-    fireEvent.click(getByRole('button', { name: /sign in/i }));
+    fireEvent.input(getByLabelText('E-mail'), { target: { value: 'a@x.io' } });
+    fireEvent.input(getByLabelText('Mot de passe'), {
+      target: { value: 'wrong' },
+    });
+    fireEvent.click(getByRole('button', { name: /se connecter/i }));
 
     const alert = await findByRole('alert');
-    expect(alert).toHaveTextContent(/invalid email or password/i);
+    expect(alert).toHaveTextContent(/e-mail ou mot de passe incorrect/i);
     await flush();
   });
 });

@@ -39,7 +39,7 @@ export const ErrorToast: Component<Props> = (props) => {
           <button
             type="button"
             onClick={() => props.onDismiss()}
-            aria-label="Dismiss"
+            aria-label="Fermer"
             class="-mr-1 rounded-md px-1.5 text-lg leading-none text-destructive-foreground/80 transition-colors hover:text-destructive-foreground"
           >
             ✕

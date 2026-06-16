@@ -100,7 +100,7 @@ describe('GroceriesService', () => {
   });
 
   describe('categorizeInBackground', () => {
-    const dairy = { id: 'cat-dairy', slug: 'dairy', name: 'Dairy & Eggs' };
+    const dairy = { id: 'cat-dairy', slug: 'dairy', name: 'Crèmerie & Œufs' };
 
     it('classifies the item, persists the category and broadcasts an update', async () => {
       categories.find.mockResolvedValue([dairy]);

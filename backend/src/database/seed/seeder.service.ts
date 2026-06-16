@@ -22,7 +22,7 @@ const PARENTS = [
 ] as const;
 
 const STARTER_SPARK_QUESTION =
-  'If we could plan one tiny adventure together this month, what would you want it to be?';
+  'Si on pouvait planifier une petite aventure ensemble ce mois-ci, ce serait laquelle ?';
 
 /**
  * Makes the app usable the instant it boots:
@@ -149,7 +149,7 @@ export class SeederService implements OnApplicationBootstrap {
       return;
     }
     await this.lists.save(
-      this.lists.create({ familyId, name: 'Shopping list' }),
+      this.lists.create({ familyId, name: 'Liste de courses' }),
     );
   }
 

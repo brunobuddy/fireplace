@@ -45,7 +45,7 @@ export const CartSummary: Component<Props> = (props) => {
             <span class="inline-flex h-[1.4rem] min-w-[1.4rem] items-center justify-center rounded-full bg-success px-1.5 text-xs font-extrabold text-success-foreground">
               {props.cart.length}
             </span>
-            in the basket
+            dans le panier
             <span
               class={cn(
                 'ml-auto opacity-70 transition-transform',
@@ -57,7 +57,7 @@ export const CartSummary: Component<Props> = (props) => {
             </span>
           </button>
           <Button size="pill" variant="accent" onClick={() => props.onClear()}>
-            Clear basket
+            Vider le panier
           </Button>
         </div>
       </div>

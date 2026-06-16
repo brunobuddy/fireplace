@@ -25,17 +25,17 @@ export const AnswerComposer: Component<Props> = (props) => {
     <form onSubmit={submit} class="flex flex-col gap-3">
       <PartnerStatus partner={props.partner} />
       <label for="spark-answer" class="sr-only">
-        Your secret answer
+        Ta réponse secrète
       </label>
       <Textarea
         id="spark-answer"
         rows={4}
-        placeholder="Type your answer… it stays hidden until you’ve both answered 🔒"
+        placeholder="Écris ta réponse… elle reste cachée jusqu’à ce que vous ayez répondu tous les deux 🔒"
         value={text()}
         onInput={(event) => setText(event.currentTarget.value)}
       />
       <Button type="submit" disabled={!text().trim()} class="self-end">
-        Share secretly 🔒
+        Partager en secret 🔒
       </Button>
     </form>
   );
@@ -51,13 +51,14 @@ const PartnerStatus: Component<{ partner?: SparkParticipantView }> = (
           when={partner().hasAnswered}
           fallback={
             <>
-              <b class="text-foreground">{partner().name}</b> hasn’t answered
-              yet — yours stays hidden until you both have.
+              <b class="text-foreground">{partner().name}</b> n’a pas encore
+              répondu — la tienne reste cachée jusqu’à ce que vous ayez tous les
+              deux répondu.
             </>
           }
         >
-          <b class="text-foreground">{partner().name}</b> has already answered
-          🔒 — add yours to reveal both.
+          <b class="text-foreground">{partner().name}</b> a déjà répondu 🔒 —
+          ajoute la tienne pour les révéler toutes les deux.
         </Show>
       </p>
     )}

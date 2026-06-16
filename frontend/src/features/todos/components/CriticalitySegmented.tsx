@@ -13,7 +13,7 @@ interface Props {
 export const CriticalitySegmented: Component<Props> = (props) => (
   <div
     role="radiogroup"
-    aria-label={props.label ?? 'Priority'}
+    aria-label={props.label ?? 'Priorité'}
     class="grid grid-cols-3 gap-1 rounded-full border border-border bg-card p-1 shadow-cosy"
   >
     <For each={CRITICALITY_ORDER}>

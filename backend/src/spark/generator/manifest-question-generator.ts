@@ -16,11 +16,11 @@ const MODEL = 'manifest/auto';
 const MAX_LENGTH = 500; // matches the SparkQuestion.text column width
 
 const SYSTEM_PROMPT =
-  'You write a single bonding question for a couple who are also parents. ' +
-  'It should be warm and a little playful or curious — sometimes light, ' +
-  'sometimes tender or intimate — and answerable in a sentence or two. ' +
-  'Keep it to ONE sentence. Output only the question itself: no preamble, ' +
-  'no quotation marks, no numbering, no emoji.';
+  'Tu écris une seule question de complicité pour un couple qui est aussi parent. ' +
+  'Elle doit être chaleureuse et un peu joueuse ou curieuse — parfois légère, ' +
+  'parfois tendre ou intime — et pouvoir trouver sa réponse en une phrase ou deux. ' +
+  'Limite-toi à UNE seule phrase, rédigée EN FRANÇAIS. Donne uniquement la question ' +
+  'elle-même : pas de préambule, pas de guillemets, pas de numérotation, pas d’emoji.';
 
 /**
  * Generates questions through Manifest (manifest.build), an OpenAI-compatible
@@ -58,7 +58,7 @@ export class ManifestQuestionGenerator implements IQuestionGenerator {
     const text = sanitize(completion.choices[0]?.message?.content ?? '');
     if (!text) {
       throw new ServiceUnavailableException(
-        'The question generator returned an empty response',
+        'Le générateur de questions a renvoyé une réponse vide',
       );
     }
     this.logger.log(`Generated a Spark question via ${MODEL}`);
@@ -70,7 +70,7 @@ export class ManifestQuestionGenerator implements IQuestionGenerator {
       const apiKey = this.config.get<string>('MANIFEST_API_KEY')?.trim();
       if (!apiKey) {
         throw new ServiceUnavailableException(
-          'MANIFEST_API_KEY is not configured — cannot generate a question',
+          'MANIFEST_API_KEY n’est pas configurée — impossible de générer une question',
         );
       }
       this.client = new OpenAI({ apiKey, baseURL: this.baseURL });
@@ -79,12 +79,12 @@ export class ManifestQuestionGenerator implements IQuestionGenerator {
   }
 
   private userPrompt(recent?: string[]): string {
-    const base = 'Give me a fresh question for today.';
+    const base = 'Donne-moi une nouvelle question pour aujourd’hui.';
     if (!recent?.length) {
       return base;
     }
     const list = recent.map((question) => `- ${question}`).join('\n');
-    return `${base}\n\nDon't repeat or closely echo any of these recent ones:\n${list}`;
+    return `${base}\n\nNe répète pas et ne reformule pas de trop près l’une de ces questions récentes :\n${list}`;
   }
 }
 

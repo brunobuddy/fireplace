@@ -21,10 +21,10 @@ export const CommentThread: Component<Props> = (props) => {
           <div class="text-4xl" aria-hidden="true">
             💬
           </div>
-          <p class="text-sm font-bold">No comments yet</p>
+          <p class="text-sm font-bold">Pas encore de commentaires</p>
           <p class="max-w-[24ch] text-xs text-muted-foreground">
-            Be the first to add a note — ask a question, drop a link, or cheer
-            it on. 🎉
+            Sois le premier à laisser un mot — pose une question, partage un
+            lien ou encourage. 🎉
           </p>
         </div>
       }
@@ -39,7 +39,7 @@ export const CommentThread: Component<Props> = (props) => {
               <div class="min-w-0 flex-1">
                 <div class="flex items-baseline gap-2">
                   <span class="text-sm font-bold">
-                    {comment.author?.name ?? 'Someone'}
+                    {comment.author?.name ?? 'Quelqu’un'}
                   </span>
                   <span class="text-[0.68rem] text-muted-foreground">
                     {relativeTime(comment.createdAt)}
@@ -49,9 +49,9 @@ export const CommentThread: Component<Props> = (props) => {
                       type="button"
                       onClick={() => props.onRemoveComment(comment.id)}
                       class="-my-1 ml-auto inline-flex min-h-[2rem] items-center rounded px-2 text-xs font-bold text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring active:text-destructive"
-                      aria-label="Delete comment"
+                      aria-label="Supprimer le commentaire"
                     >
-                      Delete
+                      Supprimer
                     </button>
                   </Show>
                 </div>

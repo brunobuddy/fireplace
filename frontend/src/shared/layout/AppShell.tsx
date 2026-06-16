@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 
 const NAV = [
-  { href: '/groceries', label: 'Groceries', icon: '🧺' },
-  { href: '/todos', label: 'To-dos', icon: '✅' },
+  { href: '/groceries', label: 'Courses', icon: '🧺' },
+  { href: '/todos', label: 'À faire', icon: '✅' },
   { href: '/spark', label: 'Spark', icon: '✨' },
   { href: '/agenda', label: 'Agenda', icon: '📅' },
-  { href: '/chat', label: 'Chat', icon: '💬' },
+  { href: '/chat', label: 'Discussion', icon: '💬' },
 ] as const;
 
 /** Persistent warm chrome shared by every family view. */
@@ -36,7 +36,7 @@ export const AppShell: Component<{ children?: JSX.Element }> = (props) => {
             {(m) => (
               <div
                 class="flex items-center gap-2 rounded-full border border-border/70 bg-card py-1 pl-1 pr-2.5 shadow-cosy"
-                aria-label={`Signed in as ${m().name}`}
+                aria-label={`Connecté en tant que ${m().name}`}
               >
                 <Avatar name={m().name} color={m().color} size="sm" />
                 <span class="text-sm font-bold">{m().name}</span>
@@ -47,7 +47,7 @@ export const AppShell: Component<{ children?: JSX.Element }> = (props) => {
             variant="ghost"
             size="icon"
             class="h-9 w-9 text-muted-foreground"
-            aria-label="Sign out"
+            aria-label="Se déconnecter"
             onClick={() => logout()}
           >
             <svg
@@ -74,7 +74,7 @@ export const AppShell: Component<{ children?: JSX.Element }> = (props) => {
 
       <nav
         class="fixed bottom-0 left-1/2 z-20 grid w-full max-w-xl -translate-x-1/2 grid-cols-5 gap-1 border-t border-border/60 bg-card/85 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-md"
-        aria-label="Family sections"
+        aria-label="Sections de la famille"
       >
         <For each={NAV}>
           {(tab) => {

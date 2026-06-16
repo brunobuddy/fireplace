@@ -11,7 +11,7 @@ export const QuestionCard: Component<{ text: string }> = (props) => (
       ✨
     </div>
     <p class="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-      Today’s question
+      La question du jour
     </p>
     <p class="mt-2 font-display text-xl font-extrabold leading-snug">
       {props.text}

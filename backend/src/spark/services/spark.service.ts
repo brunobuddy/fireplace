@@ -74,14 +74,14 @@ export class SparkService {
     const participants = await this.participantsOf(familyId);
     if (!participants.some((p) => p.id === memberId)) {
       throw new ForbiddenException(
-        'Only the two parents can answer the Spark question',
+        'Seuls les deux parents peuvent répondre à la question Spark',
       );
     }
 
     const existing = await this.spark.findAnswers(question.id);
     if (summarizeAnswers(existing, participants).revealed) {
       throw new ForbiddenException(
-        'Both answers are already in — this question is locked',
+        'Les deux réponses sont déjà enregistrées — cette question est verrouillée',
       );
     }
 
@@ -179,7 +179,7 @@ export class SparkService {
     const question = await this.spark.findActiveQuestion(familyId);
     if (!question) {
       throw new NotFoundException(
-        'No active Spark question yet — generate one first',
+        'Aucune question Spark active pour le moment — générez-en une d’abord',
       );
     }
     return question;

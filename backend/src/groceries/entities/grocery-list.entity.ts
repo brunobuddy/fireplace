@@ -17,7 +17,7 @@ import { GroceryItem } from './grocery-item.entity';
  */
 @Entity('grocery_lists')
 export class GroceryList extends BaseEntity {
-  @Column({ type: 'varchar', length: 120, default: 'Shopping list' })
+  @Column({ type: 'varchar', length: 120, default: 'Liste de courses' })
   name!: string;
 
   @Index()

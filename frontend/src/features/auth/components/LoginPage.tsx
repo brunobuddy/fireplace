@@ -27,7 +27,7 @@ export const LoginPage: Component = () => {
     setError(null);
     setBusy(true);
     void login(email().trim(), password())
-      .catch(() => setError('Invalid email or password.'))
+      .catch(() => setError('E-mail ou mot de passe incorrect.'))
       .finally(() => setBusy(false));
   };
 
@@ -39,23 +39,21 @@ export const LoginPage: Component = () => {
             🔥
           </span>
           <CardTitle class="text-2xl">Fireplace</CardTitle>
-          <p class="text-sm text-muted-foreground">
-            Sign in to your family home.
-          </p>
+          <p class="text-sm text-muted-foreground">Connecte-toi à ton foyer.</p>
         </CardHeader>
         <CardContent>
           <form class="flex flex-col gap-4" onSubmit={onSubmit}>
             <TextField value={email()} onChange={setEmail}>
-              <TextFieldLabel>Email</TextFieldLabel>
+              <TextFieldLabel>E-mail</TextFieldLabel>
               <TextFieldInput
                 type="email"
                 autocomplete="username"
-                placeholder="you@family.app"
+                placeholder="toi@famille.app"
                 required
               />
             </TextField>
             <TextField value={password()} onChange={setPassword}>
-              <TextFieldLabel>Password</TextFieldLabel>
+              <TextFieldLabel>Mot de passe</TextFieldLabel>
               <TextFieldInput
                 type="password"
                 autocomplete="current-password"
@@ -71,7 +69,7 @@ export const LoginPage: Component = () => {
               )}
             </Show>
             <Button type="submit" disabled={busy()} class="mt-1">
-              {busy() ? 'Signing in…' : 'Sign in'}
+              {busy() ? 'Connexion…' : 'Se connecter'}
             </Button>
           </form>
         </CardContent>

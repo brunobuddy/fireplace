@@ -96,9 +96,9 @@ describe('todos.helpers', () => {
 
   it('formats relative time in human units', () => {
     const now = new Date('2026-05-21T12:00:00Z');
-    expect(relativeTime('2026-05-21T11:59:30Z', now)).toBe('just now');
+    expect(relativeTime('2026-05-21T11:59:30Z', now)).toBe('à l’instant');
     expect(relativeTime('2026-05-21T11:30:00Z', now)).toBe('30m');
     expect(relativeTime('2026-05-21T09:00:00Z', now)).toBe('3h');
-    expect(relativeTime('2026-05-20T09:00:00Z', now)).toBe('yesterday');
+    expect(relativeTime('2026-05-20T09:00:00Z', now)).toBe('hier');
   });
 });

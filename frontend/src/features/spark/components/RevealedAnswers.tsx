@@ -9,7 +9,7 @@ export const RevealedAnswers: Component<{
 }> = (props) => (
   <div class="flex flex-col gap-3">
     <p class="animate-pop-in text-center font-display text-lg font-extrabold text-success">
-      You both answered! 💞
+      Vous avez répondu tous les deux ! 💞
     </p>
     <For each={props.participants}>
       {(participant) => (
@@ -23,7 +23,7 @@ export const RevealedAnswers: Component<{
             <span class="text-sm font-bold">
               {participant.name}
               <Show when={participant.isViewer}>
-                <span class="font-normal text-muted-foreground"> (you)</span>
+                <span class="font-normal text-muted-foreground"> (toi)</span>
               </Show>
             </span>
           </div>

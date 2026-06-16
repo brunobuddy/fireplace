@@ -98,7 +98,7 @@ export class TodosService {
     await this.requireTodo(todoId);
     const comment = await this.todos.findCommentById(commentId);
     if (!comment || comment.todoId !== todoId) {
-      throw new NotFoundException(`Comment ${commentId} not found`);
+      throw new NotFoundException(`Commentaire ${commentId} introuvable`);
     }
     await this.todos.removeComment(commentId);
     const updated = await this.requireTodo(todoId);
@@ -123,7 +123,7 @@ export class TodosService {
   private async requireFamily(familyId: string): Promise<Family> {
     const family = await this.families.findOne({ where: { id: familyId } });
     if (!family) {
-      throw new NotFoundException(`Family ${familyId} not found`);
+      throw new NotFoundException(`Famille ${familyId} introuvable`);
     }
     return family;
   }
@@ -131,7 +131,7 @@ export class TodosService {
   private async requireTodo(id: string): Promise<Todo> {
     const todo = await this.todos.findById(id);
     if (!todo) {
-      throw new NotFoundException(`Todo ${id} not found`);
+      throw new NotFoundException(`Tâche ${id} introuvable`);
     }
     return todo;
   }

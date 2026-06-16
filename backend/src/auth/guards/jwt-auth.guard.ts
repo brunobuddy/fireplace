@@ -33,13 +33,13 @@ export class JwtAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<AuthedRequest>();
     const token = extractBearer(request.headers.authorization);
     if (!token) {
-      throw new UnauthorizedException('Missing authentication token');
+      throw new UnauthorizedException('Jeton d’authentification manquant');
     }
     try {
       request.user = this.auth.verify(token);
       return true;
     } catch {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException('Jeton invalide ou expiré');
     }
   }
 }
