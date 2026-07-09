@@ -32,10 +32,21 @@ npm install
 npm run dev
 ```
 
-The app is gated by a login. With no `AUTH_USERS` configured, local dev falls
-back to an insecure demo account — **demo@fireplace.app** / **demo** — so you
-can sign in immediately (set `AUTH_USERS` + `JWT_SECRET` in `.env` for real
-credentials; see `.env.example`).
+The app is gated by a login, and the secret is an **Android-style unlock
+pattern** rather than a password — you drag it on a 3×3 grid. With no
+`AUTH_USERS` configured, local dev falls back to insecure demo accounts —
+**bruno@fireplace.local** and **audrey@fireplace.local**, both with the pattern
+`0367852` (down the left column, across the bottom, up the right) — so you can
+sign in immediately. Set `AUTH_USERS` + `JWT_SECRET` in `.env` for real
+credentials (see `.env.example`), hashing a pattern with:
+
+```bash
+npm run auth:hash-pattern --workspace=backend -- 0-3-6-7-8-5-2
+```
+
+A pattern is only ~18.5 bits — far weaker than a passphrase — so login is
+rate-limited per (IP, email): 5 tries a minute then a 15-minute lockout, and 20
+a day. That throttle, not the grid, is what keeps the secret out of reach.
 
 After signing in, the API reconciles the `Home` family with **Bruno** and
 **Audrey** (the two members; emails come from `AUTH_USERS`, in that order)
@@ -101,6 +112,7 @@ secrets for you in one command. Step-by-step: [`deploy/RAILWAY.md`](deploy/RAILW
 - [x] Real-time shared to-do board
 - [x] Spark — daily two-parent bonding question
 - [x] Login = identity (2 hardcoded members, emails from `AUTH_USERS`)
+- [x] Unlock-pattern login (3×3 grid) + per-account login throttling
 - [ ] Family agenda / shared calendar
 - [ ] Family conversations
 - [ ] Multi-family / per-user accounts (the data model is already family-scoped)

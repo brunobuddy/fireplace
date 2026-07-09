@@ -1,33 +1,37 @@
 import { type Component, Show, createSignal } from 'solid-js';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   TextField,
   TextFieldInput,
   TextFieldLabel,
 } from '@/components/ui/text-field';
+import { ApiError } from '@/lib/api/http';
 import { useAuth } from '../auth-context';
+import { PatternLock } from './PatternLock';
 
 /** The login gate: warm, on-brand, and the only view shown when signed out. */
 export const LoginPage: Component = () => {
   const { login } = useAuth();
   const [email, setEmail] = createSignal('');
-  const [password, setPassword] = createSignal('');
   const [error, setError] = createSignal<string | null>(null);
   const [busy, setBusy] = createSignal(false);
 
   // Kept synchronous (returns void): the rejection handler is attached to the
   // login promise in the same tick, so a failed login can never surface as an
   // unhandled rejection.
-  const onSubmit = (event: Event): void => {
-    event.preventDefault();
+  const onPattern = (pattern: string): void => {
     if (busy()) {
+      return;
+    }
+    const address = email().trim();
+    if (!address) {
+      setError('Entre ton e-mail.');
       return;
     }
     setError(null);
     setBusy(true);
-    void login(email().trim(), password())
-      .catch(() => setError('E-mail ou mot de passe incorrect.'))
+    void login(address, pattern)
+      .catch((cause: unknown) => setError(messageFor(cause)))
       .finally(() => setBusy(false));
   };
 
@@ -42,7 +46,10 @@ export const LoginPage: Component = () => {
           <p class="text-sm text-muted-foreground">Connecte-toi à ton foyer.</p>
         </CardHeader>
         <CardContent>
-          <form class="flex flex-col gap-4" onSubmit={onSubmit}>
+          <form
+            class="flex flex-col gap-4"
+            onSubmit={(event) => event.preventDefault()}
+          >
             <TextField value={email()} onChange={setEmail}>
               <TextFieldLabel>E-mail</TextFieldLabel>
               <TextFieldInput
@@ -52,15 +59,12 @@ export const LoginPage: Component = () => {
                 required
               />
             </TextField>
-            <TextField value={password()} onChange={setPassword}>
-              <TextFieldLabel>Mot de passe</TextFieldLabel>
-              <TextFieldInput
-                type="password"
-                autocomplete="current-password"
-                placeholder="••••••••"
-                required
-              />
-            </TextField>
+
+            <div class="flex flex-col gap-2">
+              <p class="text-sm font-medium">Schéma</p>
+              <PatternLock onComplete={onPattern} disabled={busy()} />
+            </div>
+
             <Show when={error()}>
               {(message) => (
                 <p role="alert" class="text-sm font-semibold text-destructive">
@@ -68,12 +72,23 @@ export const LoginPage: Component = () => {
                 </p>
               )}
             </Show>
-            <Button type="submit" disabled={busy()} class="mt-1">
-              {busy() ? 'Connexion…' : 'Se connecter'}
-            </Button>
+            <Show when={busy()}>
+              <p class="text-center text-sm text-muted-foreground">Connexion…</p>
+            </Show>
           </form>
         </CardContent>
       </Card>
     </div>
   );
 };
+
+/**
+ * A lockout has to read differently from a wrong schéma, or the one person who
+ * genuinely mistyped will keep drawing into a wall with no idea why.
+ */
+function messageFor(cause: unknown): string {
+  if (cause instanceof ApiError && cause.status === 429) {
+    return 'Trop de tentatives. Réessaie dans quelques minutes.';
+  }
+  return 'E-mail ou schéma incorrect.';
+}

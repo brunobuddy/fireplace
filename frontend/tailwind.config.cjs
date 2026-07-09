@@ -78,11 +78,17 @@ module.exports = {
           from: { opacity: '0', transform: 'scale(0.96) translateY(-6px)' },
           to: { opacity: '1', transform: 'scale(1) translateY(0)' },
         },
+        shake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '20%, 60%': { transform: 'translateX(-6px)' },
+          '40%, 80%': { transform: 'translateX(6px)' },
+        },
       },
       animation: {
         'fade-in-up': 'fade-in-up 0.25s cubic-bezier(0.22,1,0.36,1)',
         'pop-in': 'pop-in 0.3s cubic-bezier(0.22,1,0.36,1)',
         'content-show': 'content-show 0.16s cubic-bezier(0.22,1,0.36,1)',
+        shake: 'shake 0.4s cubic-bezier(0.36,0.07,0.19,0.97)',
       },
     },
   },

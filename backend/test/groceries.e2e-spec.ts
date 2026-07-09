@@ -1,5 +1,5 @@
 process.env.NODE_ENV = 'test';
-process.env.AUTH_USERS = 'bruno@e2e.app:test-pass,audrey@e2e.app:test-pass';
+process.env.AUTH_USERS = 'bruno@e2e.app:012587,audrey@e2e.app:012587';
 process.env.JWT_SECRET = 'e2e-test-secret';
 
 import { INestApplication, ValidationPipe } from '@nestjs/common';
@@ -42,7 +42,7 @@ describe('Groceries (e2e)', () => {
 
     const login = await request(app.getHttpServer())
       .post('/api/auth/login')
-      .send({ email: 'bruno@e2e.app', password: 'test-pass' });
+      .send({ email: 'bruno@e2e.app', password: '012587' });
     token = login.body.token;
     memberId = login.body.user.memberId;
     familyId = login.body.user.familyId;

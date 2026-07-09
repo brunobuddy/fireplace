@@ -33,6 +33,18 @@ railway domain                     # generate a public URL
 
 Open the URL, log in with one of the `AUTH_USERS` you entered. Done.
 
+> ⚠️ **`railway-setup.sh` writes to whatever service `railway link` last
+> selected**, and that link is global to your shell — not to this repo. It will
+> overwrite `DATABASE_URL`, `JWT_SECRET` and `AUTH_USERS` on that service. The
+> script therefore prints the target, refuses any project other than
+> `$EXPECTED_RAILWAY_PROJECT` (default `Fireplace`), refuses a database service,
+> and makes you type the project name; `--yes` skips only the typing and is
+> **required** to run non-interactively. Run `railway status` first.
+>
+> `PG_SERVICE` (default `Postgres`) must match your Postgres service's name
+> **exactly**. Railway resolves `${{Wrong.DATABASE_URL}}` to an **empty string**
+> with no error, so a typo here leaves the app with no database URL at all.
+
 ---
 
 ## What gets set, and why
@@ -43,7 +55,8 @@ Open the URL, log in with one of the `AUTH_USERS` you entered. Done.
 | `DB_SYNCHRONIZE` | `true`                         | setup script   | Creates the schema on first boot (no migrations yet). Flip to `false` after the first deploy. |
 | `JWT_SECRET`     | fresh 32-byte random hex       | setup script   | App refuses to boot in production without it. |
 | `JWT_EXPIRES_IN` | `7d`                           | setup script   | Token lifetime; optional. |
-| `AUTH_USERS`     | `email:secret,email:secret`    | setup script   | Two login pairs. **Order matters:** first → Bruno, second → Audrey (the seeder maps them onto the two hardcoded members on every boot). Bcrypt-hashed when backend deps are installed. |
+| `AUTH_USERS`     | `email:pattern,email:pattern`  | setup script   | Two login pairs; the secret is an unlock pattern (grid cells row-major, six minimum), always bcrypt-hashed. **Order matters:** first → Bruno, second → Audrey (the seeder maps them onto the two hardcoded members on every boot). |
+| `LOGIN_*`        | see `.env.example`             | you (optional) | Throttle tuning. Defaults: 5 tries/min → 15-min lockout, 20/day, per (IP, email). |
 | `NODE_ENV`       | `production`                   | **image**      | Baked into `backend/Dockerfile` — nothing to set. |
 | `PORT`           | (injected)                     | **Railway**    | The app binds to it automatically. |
 
@@ -72,12 +85,14 @@ Railway's TCP proxy and does use TLS.
    DB_SYNCHRONIZE=true
    JWT_SECRET=<paste a long random string>
    JWT_EXPIRES_IN=7d
-   AUTH_USERS=bruno@your.app:<password-or-bcrypt-hash>,audrey@your.app:<…>
+   AUTH_USERS=bruno@your.app:<pattern-or-bcrypt-hash>,audrey@your.app:<…>
    ```
 
    - Generate a secret: `openssl rand -hex 32`
-   - Bcrypt a password (recommended): `npm run auth:hash --workspace=backend -- 'your-password'`
-     (plaintext works too — just avoid `:` and `,` in the password).
+   - Bcrypt a pattern (recommended): `npm run auth:hash-pattern --workspace=backend -- 0-3-6-7-8-5-2`
+     — it prints the walk as a grid so you can check it, canonicalizes the walk
+     exactly as the phone does, and emits the hash. A plaintext pattern
+     (`0367852`) works too; six cells minimum.
 4. **Settings → Networking → Generate Domain.** Open it and log in.
 
 > Tip: running `./deploy/railway-setup.sh` without the Railway CLI prints this

@@ -1,5 +1,5 @@
 process.env.NODE_ENV = 'test';
-process.env.AUTH_USERS = 'bruno@e2e.app:test-pass,audrey@e2e.app:test-pass';
+process.env.AUTH_USERS = 'bruno@e2e.app:012587,audrey@e2e.app:012587';
 process.env.JWT_SECRET = 'e2e-test-secret';
 
 import { INestApplication, ValidationPipe } from '@nestjs/common';
@@ -38,7 +38,7 @@ describe('Auth (e2e)', () => {
       .send({ email, password });
 
   it('logs in and returns a token + the signed-in member profile', async () => {
-    const res = await login('bruno@e2e.app', 'test-pass');
+    const res = await login('bruno@e2e.app', '012587');
     expect(res.status).toBe(200);
     expect(typeof res.body.token).toBe('string');
     expect(res.body.user).toMatchObject({
@@ -51,17 +51,30 @@ describe('Auth (e2e)', () => {
   });
 
   it('is case-insensitive on the email', async () => {
-    const res = await login('Bruno@E2E.App', 'test-pass');
+    const res = await login('Bruno@E2E.App', '012587');
     expect(res.status).toBe(200);
   });
 
-  it('rejects a wrong password with 401', async () => {
-    const res = await login('bruno@e2e.app', 'nope');
+  it('rejects a wrong but well-formed pattern with 401', async () => {
+    const res = await login('bruno@e2e.app', '056183');
     expect(res.status).toBe(401);
   });
 
   it('rejects a malformed login body with 400 (validation)', async () => {
     const res = await login('not-an-email', '');
+    expect(res.status).toBe(400);
+  });
+
+  // Rejected before bcrypt ever runs — these never reach the credential check.
+  it.each([
+    ['nope', 'not a walk on the grid at all'],
+    ['01258', 'only five cells'],
+    ['011587', 'revisits cell 1'],
+    ['021587', '0 -> 2 skips the unvisited cell 1'],
+    ['086135', '0 -> 8 skips the unvisited centre'],
+    ['0125879', 'cell 9 is off the grid'],
+  ])('rejects "%s" with 400 (%s)', async (password) => {
+    const res = await login('bruno@e2e.app', password);
     expect(res.status).toBe(400);
   });
 
@@ -71,7 +84,7 @@ describe('Auth (e2e)', () => {
   });
 
   it('allows protected routes and /auth/me with a valid token', async () => {
-    const { body } = await login('bruno@e2e.app', 'test-pass');
+    const { body } = await login('bruno@e2e.app', '012587');
     const bearer = `Bearer ${body.token}`;
 
     const families = await request(app.getHttpServer())
