@@ -64,6 +64,22 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   `localStorage`** (sent as the `Authorization` header and in the Socket.IO
   handshake) — simpler than httpOnly cookies, no CSRF machinery, and a clean
   fit for the websocket handshake.
+- **The secret is an Android-style unlock pattern, not a password.** The app
+  lives on phones, so login is a 3×3 grid you drag. A pattern *is* a number: the
+  cells it walks, row-major, joined — `0→3→6→7→8` is the string `"03678"`. So it
+  rides in the existing `password` field and is bcrypt-hashed into `AUTH_USERS`
+  like any other secret; `AuthService` never learns it came from a grid. The
+  Android skip rule applies (a straight move over an unvisited cell drags that
+  cell in), giving **389,112** reachable patterns — **~18.5 bits, weaker than a
+  6-digit PIN**. We demand **6 cells** (380,336 patterns): that costs 2.26% of
+  the space but discards the short ones humans overwhelmingly pick. A higher
+  minimum buys almost no entropy, so **throttling is the control that makes this
+  safe** — login rate-limiting is part of the feature, not a follow-up. It does
+  *not* stop a distributed guess; accepted for a family grocery list. The
+  canonicalizer is duplicated (`backend/src/auth/pattern.ts`,
+  `frontend/src/features/auth/pattern.ts`) and pinned by
+  `test-fixtures/pattern-vectors.json`, so a drift between the two fails the
+  suites rather than minting a hash nobody can ever log in with.
 - **One service — NestJS serves the SPA *and* the API on a single port/origin**
   (one Railway service), like `mnfst/manifest`. The SPA calls relative `/api`
   and connects the socket same-origin; in dev Vite proxies `/api` +
@@ -98,8 +114,23 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   + `GET /api/health`. `GroceriesGateway`, `TodosGateway` and `SparkGateway`
   verify the handshake token and drop unauthenticated sockets. Fail-closed:
   in production a missing `JWT_SECRET` aborts boot; outside production an
-  insecure dev secret + demo login (`demo@fireplace.app` / `demo`) are used
-  and logged.
+  insecure dev secret + dev logins (`bruno@fireplace.local` /
+  `audrey@fireplace.local`, pattern `0367852`) are used and logged. The dev
+  fallback carries **two** entries on purpose — the seeder maps the first onto
+  Bruno and the second onto Audrey and skips the household with fewer, so a
+  one-entry fallback left the login with no member row to resolve to.
+- **Login throttling** (`@nestjs/throttler`) is mandatory, not decoration: an
+  18.5-bit secret on an open endpoint falls to a script in minutes.
+  `LoginThrottlerGuard` buckets per **(client IP, email)** — email-only keying
+  would let an attacker lock the household out. Two windows, both env-tunable
+  (`LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW_MS`, `LOGIN_BLOCK_MS`,
+  `LOGIN_DAILY_MAX_ATTEMPTS`): 5/minute then a 15-minute lockout, and 20/day.
+  Guarded on the `login` route only — `GET /auth/me` runs on every app boot.
+  Relaxed under `NODE_ENV=test` so only `login-throttle.e2e-spec.ts` exercises
+  it. `main.ts` sets `trust proxy` in production: without it every request wears
+  Railway's proxy IP and the buckets merge. Storage is in-memory → per instance.
+  The `LoginDto` also rejects any string that is not a traceable walk, which
+  buys no secrecy but throws garbage out before spending ~100ms on bcrypt.
 - **Dependency Inversion:** `GroceriesService` depends on the
   `IGroceryItemRepository` port (token + interface), bound to a TypeORM
   adapter in the module. Swap persistence / fake in tests = one line.
@@ -148,6 +179,14 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   signed-in user and renders `<LoginPage>` until authenticated. The token is
   injected into `lib/api/http.ts` (Bearer header) and the Socket.IO handshake
   via `lib/api/auth-token.ts`; a 401 on an authenticated request auto-logs-out.
+- **`<PatternLock>`** is the login secret input: an SVG trail over a 3×3 grid of
+  real `<button>`s, driven by pointer events with `setPointerCapture` and
+  `touch-action: none`. Drag to draw (submits on release); a single tap instead
+  enters tap-to-build mode with an explicit *Valider* — that path is what makes
+  the grid reachable by keyboard and screen reader, since a drag surface alone
+  is not. The trail is wiped the instant it is handed over (shoulder-surfing),
+  and `LoginPage` distinguishes a 429 lockout from a wrong pattern via
+  `ApiError.status`, or the one person who mistyped keeps drawing into a wall.
 - One `createStore` controller is the source of truth; pure list logic in
   `groceries.helpers.ts` is isolated and unit-tested.
 - **Same-origin API:** the SPA calls a relative `/api` and connects the socket
@@ -176,9 +215,12 @@ npm run dev          # API (nest watch) + Vite, concurrently
 `postgres_db` container. Override with `POSTGRES_HOST_PORT`, or point the
 backend at another Postgres via `DB_*` / `DATABASE_URL`.
 
-**Login is gated.** With no `AUTH_USERS` set, dev falls back to an insecure
-demo login (**demo@fireplace.app / demo**, logged on boot). Set `AUTH_USERS`
-+ `JWT_SECRET` (see `.env.example`) for real credentials.
+**Login is gated, and the secret is a pattern.** With no `AUTH_USERS` set, dev
+falls back to insecure logins (**bruno@fireplace.local** and
+**audrey@fireplace.local**, both pattern `0367852` — the "U" down the left
+column, across the bottom, up the right), logged on boot. Set `AUTH_USERS`
++ `JWT_SECRET` (see `.env.example`) for real credentials; hash a pattern with
+`npm run auth:hash-pattern --workspace=backend -- 0-3-6-7-8-5-2`.
 
 The `/serve` skill in this environment is written for a *different* project
 (Manifest); for Fireplace it was adapted to: two random ports (backend +
@@ -220,13 +262,20 @@ config path to set in the dashboard. Full walkthrough: `deploy/RAILWAY.md`.
 2. **Connect this repo** as the app service — Railway reads `railway.toml`
    (Dockerfile `backend/Dockerfile`, healthcheck `/api/health`).
 3. **Set the env vars** with `deploy/railway-setup.sh` (generates `JWT_SECRET`,
-   bcrypt-hashes passwords, wires `DATABASE_URL`, sets `DB_SYNCHRONIZE=true`),
-   or by hand:
+   bcrypt-hashes patterns, wires `DATABASE_URL`, sets `DB_SYNCHRONIZE=true`).
+   ⚠️ It writes to whatever service `railway link` last selected, so it now
+   prints the target, refuses any project but `$EXPECTED_RAILWAY_PROJECT`
+   (default `Fireplace`), refuses a database service, and makes you type the
+   project name (`--yes` to skip the typing). `PG_SERVICE` must match your
+   Postgres service's name **exactly** — Railway resolves a reference to an
+   unknown service as an empty string, silently. Or set them by hand:
    - `DATABASE_URL = ${{Postgres.DATABASE_URL}}`  (Railway **private** URL)
    - `DB_SYNCHRONIZE = true`  (no migrations yet — needed on first deploy;
      flip to `false` afterwards)
-   - `AUTH_USERS = email:secret,email:secret`  (bcrypt hashes recommended;
-     `npm run auth:hash --workspace=backend -- 'pw'`)
+   - `AUTH_USERS = email:pattern,email:pattern`  (bcrypt hashes recommended;
+     `npm run auth:hash-pattern --workspace=backend -- 0-3-6-7-8-5-2`)
+   - `LOGIN_MAX_ATTEMPTS` / `LOGIN_WINDOW_MS` / `LOGIN_BLOCK_MS` /
+     `LOGIN_DAILY_MAX_ATTEMPTS`  (optional; defaults 5 · 60s · 15min · 20/day)
    - `JWT_SECRET = <long random string>`  (**required** — app won't boot
      in production without it)
    - `JWT_EXPIRES_IN = 7d`  (optional; default `7d`)
@@ -256,7 +305,11 @@ npm run test:e2e     # backend e2e — in-memory SQLite, no DB needed
 npm run build        # nest build + vite build
 ```
 
-Current baseline: typecheck ✅ · lint ✅ · unit 26+19 ✅ · e2e 21 ✅ · build ✅.
+Current baseline: typecheck ✅ · lint ✅ · unit 113+99 ✅ · e2e 44 ✅ · build ✅.
+`test-fixtures/pattern-vectors.json` is read by **both** suites (via `fs`, not
+an import — it sits outside either tsconfig program) and is what keeps the two
+copies of the pattern canonicalizer honest; both specs also re-derive Android's
+389,112 / 380,336 pattern counts by DFS.
 e2e/test uses SQLite on purpose → entities avoid pg-only types (no native
 enum/jsonb; `status` is varchar). Backend lint = prettier-as-eslint; run
 `npm run format --workspace=@fireplace/backend` to auto-fix.
@@ -269,10 +322,12 @@ enum/jsonb; `status` is varchar). Backend lint = prettier-as-eslint; run
   requires / decorators; disproportionate for a scaffold).
 - `synchronize` instead of migrations — fine for the scaffold; add TypeORM
   migrations before real data exists.
-- Auth: a basic app-level login gate is in (2 `.env` users + JWT). Next steps
-  when needed: DB-backed per-user accounts, password reset, refresh tokens,
-  and login rate-limiting (e.g. `@nestjs/throttler`). The model is
-  family-scoped, so per-user accounts can map onto the member seam.
+- Auth: an app-level login gate is in (2 `.env` users + JWT), the secret is an
+  unlock pattern, and login is rate-limited (`@nestjs/throttler`, per IP+email).
+  Next steps when needed: DB-backed per-user accounts, pattern reset, refresh
+  tokens. The model is family-scoped, so per-user accounts can map onto the
+  member seam. Throttler storage is in-memory — a second app instance would
+  double the effective attempt budget; move to Redis before scaling out.
 
 ## 10. Roadmap
 
@@ -280,6 +335,7 @@ enum/jsonb; `status` is varchar). Backend lint = prettier-as-eslint; run
 - [x] Real-time to-do board — criticality + per-task comments, mobile-first
 - [x] Dockerised + Railway-ready
 - [x] Basic login gate (2 users in `.env`, JWT)
+- [x] Android-style unlock pattern instead of a password, + login throttling
 - [x] Installable PWA (manifest + service worker, warm flame icon set)
 - [x] Spark — daily two-parent bonding question (OpenAI SDK, secret reveal,
       daily cron)

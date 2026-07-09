@@ -1,5 +1,5 @@
 process.env.NODE_ENV = 'test';
-process.env.AUTH_USERS = 'bruno@e2e.app:test-pass,audrey@e2e.app:test-pass';
+process.env.AUTH_USERS = 'bruno@e2e.app:012587,audrey@e2e.app:012587';
 process.env.JWT_SECRET = 'e2e-test-secret';
 
 import { INestApplication, ValidationPipe } from '@nestjs/common';
@@ -64,12 +64,12 @@ describe('Spark (e2e)', () => {
     );
     await app.init();
 
-    const bruno = await login('bruno@e2e.app', 'test-pass');
+    const bruno = await login('bruno@e2e.app', '012587');
     brunoToken = bruno.body.token;
     brunoId = bruno.body.user.memberId;
     familyId = bruno.body.user.familyId;
 
-    const audrey = await login('audrey@e2e.app', 'test-pass');
+    const audrey = await login('audrey@e2e.app', '012587');
     audreyToken = audrey.body.token;
     audreyId = audrey.body.user.memberId;
   });

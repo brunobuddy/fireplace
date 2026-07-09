@@ -2,13 +2,45 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CredentialRecord } from '../auth.types';
 
-/** Insecure default so local dev / `npm run dev` works with no setup. */
-const DEV_FALLBACK = 'demo@fireplace.app:demo';
+/**
+ * The unlock pattern behind the dev logins — down the left column, across the
+ * bottom, up the right column:
+ *
+ *     0 . 2
+ *     3 . 5      0 -> 3 -> 6 -> 7 -> 8 -> 5 -> 2
+ *     6 7 8
+ */
+export const DEV_FALLBACK_PATTERN = '0367852';
+
+/**
+ * Insecure defaults so `npm run dev` works with no setup. There are *two*
+ * entries because the seeder maps the first onto Bruno and the second onto
+ * Audrey: with a single entry it seeds neither member, and every login then
+ * dies at the member lookup rather than at the credential check.
+ */
+const DEV_FALLBACK = `bruno@fireplace.local:${DEV_FALLBACK_PATTERN},audrey@fireplace.local:${DEV_FALLBACK_PATTERN}`;
+
+/**
+ * The credential directory in effect. Production fails closed on a missing
+ * `AUTH_USERS`; everywhere else the dev logins stand in. The seeder shares this
+ * so the members it creates always match the logins that exist.
+ */
+export function resolveUsers(
+  raw: string | undefined,
+  isProduction: boolean,
+): CredentialRecord[] {
+  const trimmed = raw?.trim();
+  if (trimmed) {
+    return parseUsers(trimmed);
+  }
+  return isProduction ? [] : parseUsers(DEV_FALLBACK);
+}
 
 /**
  * The app's user directory, sourced from the `AUTH_USERS` env var.
- * Format: comma-separated `email:secret` entries, where `secret` is a
- * plaintext password or a bcrypt hash (the AuthService picks the comparison).
+ * Format: comma-separated `email:secret` entries, where `secret` is an unlock
+ * pattern in plaintext or — preferably — its bcrypt hash (the AuthService picks
+ * the comparison).
  *
  * This is the single seam for "who can log in" — swap it for a DB-backed
  * store later without touching the rest of auth (Dependency Inversion).
@@ -21,23 +53,22 @@ export class EnvUserStore {
   constructor(config: ConfigService) {
     const raw = config.get<string>('AUTH_USERS')?.trim();
     const isProd = config.get('NODE_ENV') === 'production';
+    this.users = resolveUsers(raw, isProd);
 
     if (!raw) {
       if (isProd) {
         this.logger.error(
-          'AUTH_USERS is not set — nobody can log in. Set it to "email:password,…".',
+          'AUTH_USERS is not set — nobody can log in. Set it to "email:secret,…".',
         );
-        this.users = [];
         return;
       }
+      const emails = this.users.map((user) => user.email).join(', ');
       this.logger.warn(
-        `AUTH_USERS not set — using insecure dev login "${DEV_FALLBACK}". Set AUTH_USERS for real use.`,
+        `AUTH_USERS not set — using insecure dev logins (${emails}) with pattern ${DEV_FALLBACK_PATTERN}. Set AUTH_USERS for real use.`,
       );
-      this.users = parseUsers(DEV_FALLBACK);
       return;
     }
 
-    this.users = parseUsers(raw);
     if (this.users.length === 0) {
       this.logger.error(
         'AUTH_USERS is set but no valid "email:secret" entries were parsed.',
@@ -59,8 +90,8 @@ export class EnvUserStore {
 
 /**
  * Parse `email:secret,email:secret` into records. Emails are lowercased; the
- * first colon separates email from secret (bcrypt hashes contain no colon).
- * Malformed entries are skipped.
+ * first colon separates email from secret (bcrypt hashes and unlock patterns
+ * both contain no colon). Malformed entries are skipped.
  */
 export function parseUsers(raw: string): CredentialRecord[] {
   return raw

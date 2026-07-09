@@ -7,7 +7,7 @@ import { Member } from '../../family/entities/member.entity';
 import { GroceryList } from '../../groceries/entities/grocery-list.entity';
 import { GroceryCategory } from '../../groceries/entities/grocery-category.entity';
 import { SparkQuestion } from '../../spark/entities/spark-question.entity';
-import { parseUsers } from '../../auth/users/env-user.store';
+import { resolveUsers } from '../../auth/users/env-user.store';
 import { CATEGORY_SEED } from './categories.seed';
 
 /**
@@ -88,12 +88,16 @@ export class SeederService implements OnApplicationBootstrap {
     await this.ensureStarterSparkQuestion(family.id);
   }
 
+  /**
+   * Resolved through the same helper the credential store uses, so the dev
+   * fallback seeds the very members it lets you log in as. Reading `AUTH_USERS`
+   * directly used to leave the fallback login with no member row at all.
+   */
   private readAuthEmails(): string[] {
-    const raw = this.config.get<string>('AUTH_USERS')?.trim();
-    if (!raw) {
-      return [];
-    }
-    return parseUsers(raw).map((entry) => entry.email);
+    return resolveUsers(
+      this.config.get<string>('AUTH_USERS'),
+      this.config.get('NODE_ENV') === 'production',
+    ).map((entry) => entry.email);
   }
 
   private async ensureFamily(): Promise<Family> {
