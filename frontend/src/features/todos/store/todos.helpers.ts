@@ -54,25 +54,6 @@ export const commentCount = (todo: Todo): number => todo.comments?.length ?? 0;
 export const sortComments = (comments: TodoComment[]): TodoComment[] =>
   [...comments].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
-/**
- * Short, human relative time: "just now", "5m", "3h", "yesterday", a weekday,
- * then a calendar date. `now` is injectable so it can be unit-tested.
- */
-export function relativeTime(iso: string, now: Date = new Date()): string {
-  const then = new Date(iso);
-  const diffMs = now.getTime() - then.getTime();
-  if (Number.isNaN(diffMs)) {
-    return '';
-  }
-  const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 1) return 'à l’instant';
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return 'hier';
-  if (days < 7) {
-    return then.toLocaleDateString('fr-FR', { weekday: 'short' });
-  }
-  return then.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
-}
+// Moved to the shared lib (the projects board tells time the same way);
+// re-exported so existing imports keep working.
+export { relativeTime } from '@/lib/relative-time';

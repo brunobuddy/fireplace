@@ -10,6 +10,7 @@ import { HealthModule } from './health/health.module';
 import { FamilyModule } from './family/family.module';
 import { GroceriesModule } from './groceries/groceries.module';
 import { TodosModule } from './todos/todos.module';
+import { ProjectsModule } from './projects/projects.module';
 import { SparkModule } from './spark/spark.module';
 
 /**
@@ -33,6 +34,7 @@ import { SparkModule } from './spark/spark.module';
     FamilyModule,
     GroceriesModule,
     TodosModule,
+    ProjectsModule,
     SparkModule,
     ...spaModule(),
   ],

@@ -29,6 +29,16 @@ two parents each answer *secretly*; the answers reveal to each other only once
 daily cron rolls a fully-answered question over to a fresh one. Answer secrecy
 is enforced server-side (the partner's text is never sent until the reveal).
 
+**Feature 4 (done): Projets — a real-time project board.** A to-do list with
+sections: create a project, split it into tasks, watch a slim progress bar
+fill. Each task carries a priority (the to-do levels **plus `blocking`** —
+"Bloquant", the step the project is stuck on), **exactly one responsible
+member or nobody** (assignee validated server-side against the family), and
+a comment thread. One project unfolds at a time (accordion, tasks nested the
+same way); a finished project is **archived** — history kept, hidden in a
+collapsed shelf until asked for. It replaced the "Agenda" and "Discussion"
+coming-soon tabs (nav is 4 tabs now).
+
 ## 2. Stack
 
 | Layer    | Choice                                                    |
@@ -100,9 +110,9 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
 ## 4. Architecture
 
 ### Backend — SOLID, modular
-- Feature modules: `auth/`, `family/`, `groceries/`, `todos/`, `spark/`,
-  `health/`; `database/` owns the connection + bootstrap seeder. New domains
-  are added to `app.module.ts` without touching existing ones (OCP).
+- Feature modules: `auth/`, `family/`, `groceries/`, `todos/`, `projects/`,
+  `spark/`, `health/`; `database/` owns the connection + bootstrap seeder. New
+  domains are added to `app.module.ts` without touching existing ones (OCP).
 - **Auth:** `auth/` gates the app and **is** the identity layer. `EnvUserStore`
   (the swap-for-DB seam, DIP) parses `AUTH_USERS` and feeds `AuthService`
   (constant-time SHA-256 compare for plaintext / bcrypt for hashes). On a
@@ -140,6 +150,16 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   whole todo so the client keeps a single idempotent "upsert a todo" path.
   `completedAt` is a varchar ISO string (no pg-only date type → the SQLite
   test DB and Postgres agree).
+- **Projects** push the todos design one aggregate level up: an
+  `IProjectRepository` port wraps Project → tasks → comments, and **every
+  mutation (rename, task add/edit/toggle, comment) re-reads and re-broadcasts
+  the whole project**, so HTTP responses and `ProjectsGateway` payloads
+  (`family-projects:<id>` room) are the same "here is the project now" truth
+  and the client keeps one idempotent upsert path. Services are split for SRP:
+  `ProjectsService` (list/create/rename/archive/delete) and
+  `ProjectTasksService` (tasks + comments, incl. assignee-in-family
+  validation). Archiving is a status flip + `archivedAt` ISO varchar — same
+  cross-driver trick as `completedAt`.
 - **Spark** adds two ports: `ISparkRepository` (the active question + its two
   answers) and `IQuestionGenerator` (a **Manifest** adapter — manifest.build is
   an OpenAI-compatible LLM router; model is hardcoded to `manifest/auto` (the
@@ -171,10 +191,15 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   anonymously.
 
 ### Frontend — feature-sliced, fine-grained reactivity
-- `features/groceries`, `features/todos`, `features/family`, `features/auth`;
-  shared `shared/ui`, `shared/layout`, `components/ui` (the solid-ui layer —
-  now incl. a `Textarea`); routing via `@solidjs/router`, bottom-nav has a
-  tab per view.
+- `features/groceries`, `features/todos`, `features/projects`,
+  `features/family`, `features/auth`; shared `shared/ui`, `shared/layout`,
+  `components/ui` (the solid-ui layer — now incl. a `Textarea`); routing via
+  `@solidjs/router`, bottom-nav has a tab per view (4 tabs: Courses, À faire,
+  Projets, Spark). `relativeTime` lives in `lib/relative-time.ts` (todos
+  re-exports it). The projects page is an accordion of `ProjectCard`s
+  (progress bar + `done/total` in the header), tasks nested as a second
+  accordion inside; the assignee picker feeds off `GET /families/:id/members`
+  via `features/family/family.api.ts`.
 - **Auth gate:** `AuthProvider` owns the bearer token (in `localStorage`) +
   signed-in user and renders `<LoginPage>` until authenticated. The token is
   injected into `lib/api/http.ts` (Bearer header) and the Socket.IO handshake
@@ -305,7 +330,7 @@ npm run test:e2e     # backend e2e — in-memory SQLite, no DB needed
 npm run build        # nest build + vite build
 ```
 
-Current baseline: typecheck ✅ · lint ✅ · unit 113+99 ✅ · e2e 44 ✅ · build ✅.
+Current baseline: typecheck ✅ · lint ✅ · unit 133+117 ✅ · e2e 54 ✅ · build ✅.
 `test-fixtures/pattern-vectors.json` is read by **both** suites (via `fs`, not
 an import — it sits outside either tsconfig program) and is what keeps the two
 copies of the pattern canonicalizer honest; both specs also re-derive Android's
@@ -339,6 +364,8 @@ enum/jsonb; `status` is varchar). Backend lint = prettier-as-eslint; run
 - [x] Installable PWA (manifest + service worker, warm flame icon set)
 - [x] Spark — daily two-parent bonding question (OpenAI SDK, secret reveal,
       daily cron)
+- [x] Projets — real-time project board (tasks with priority incl. Bloquant,
+      one responsible member, comments, progress bar, archive)
 - [ ] Family agenda / shared calendar
 - [ ] Family conversations
 - [ ] Real per-user authentication (DB-backed accounts)
