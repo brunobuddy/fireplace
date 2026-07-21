@@ -142,8 +142,8 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   test DB and Postgres agree).
 - **Spark** adds two ports: `ISparkRepository` (the active question + its two
   answers) and `IQuestionGenerator` (a **Manifest** adapter — manifest.build is
-  an OpenAI-compatible LLM router; model is hardcoded to `manifest/auto` (the
-  only valid request model — the router picks the provider); base URL via
+  an OpenAI-compatible LLM router; model is hardcoded to `auto` (the router
+  picks the provider — the old `manifest/auto` id now fails with M302); base URL via
   `MANIFEST_BASE_URL` for self-hosted instances; a deterministic stub binds
   under `NODE_ENV=test` so suites never call Manifest — there is **no runtime
   fallback**, a missing key fails closed). Answer **secrecy is enforced
