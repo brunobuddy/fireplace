@@ -20,6 +20,14 @@ export const TODO_EVENTS = {
   TODO_REMOVED: 'todo:removed',
 } as const;
 
+/** Projects board events — must mirror the backend's `PROJECT_EVENTS`. */
+export const PROJECT_EVENTS = {
+  JOIN: 'project:join',
+  PROJECT_ADDED: 'project:added',
+  PROJECT_UPDATED: 'project:updated',
+  PROJECT_REMOVED: 'project:removed',
+} as const;
+
 /** Spark events — must mirror the backend's `SPARK_EVENTS`. Neither broadcast
  *  carries answer text, so secrecy holds over the wire. */
 export const SPARK_EVENTS = {

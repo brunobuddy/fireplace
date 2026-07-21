@@ -113,6 +113,55 @@ export interface TodoSnapshot {
   todos: Todo[];
 }
 
+// ── Projects (task batches with a responsible member per task) ────────────
+export type ProjectStatus = 'active' | 'archived';
+/** Adds `blocking` above the to-do levels: the step the project is stuck on. */
+export type ProjectTaskPriority = 'low' | 'medium' | 'high' | 'blocking';
+export type ProjectTaskStatus = 'open' | 'done';
+
+export interface ProjectTaskComment {
+  id: string;
+  taskId: string;
+  authorId: string;
+  author?: Member | null;
+  body: string;
+  createdAt: string;
+}
+
+export interface ProjectTask {
+  id: string;
+  title: string;
+  priority: ProjectTaskPriority;
+  status: ProjectTaskStatus;
+  projectId: string;
+  /** Exactly one responsible member — or nobody. */
+  assigneeId: string | null;
+  assignee?: Member | null;
+  createdById: string;
+  createdBy?: Member | null;
+  completedById: string | null;
+  completedBy?: Member | null;
+  completedAt: string | null;
+  comments: ProjectTaskComment[];
+  createdAt: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  status: ProjectStatus;
+  familyId: string;
+  createdById: string;
+  createdBy?: Member | null;
+  archivedAt: string | null;
+  tasks: ProjectTask[];
+  createdAt: string;
+}
+
+export interface ProjectSnapshot {
+  projects: Project[];
+}
+
 // ── Spark (daily two-parent bonding question) ─────────────────────────────
 export interface SparkQuestionView {
   id: string;
