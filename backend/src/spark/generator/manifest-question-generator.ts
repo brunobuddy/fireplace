@@ -11,8 +11,8 @@ import {
 } from './question-generator';
 
 const DEFAULT_BASE_URL = 'https://app.manifest.build/v1';
-/** Manifest's only valid request model — the router picks the provider. */
-const MODEL = 'manifest/auto';
+/** `auto` lets the router pick; `manifest/auto` is rejected with M302. */
+const MODEL = 'auto';
 const MAX_LENGTH = 500; // matches the SparkQuestion.text column width
 
 const SYSTEM_PROMPT =
@@ -24,9 +24,10 @@ const SYSTEM_PROMPT =
 
 /**
  * Generates questions through Manifest (manifest.build), an OpenAI-compatible
- * LLM router. `manifest/auto` is the only valid request model — the router
- * picks the actual provider; provider-specific names (`gpt-4o-mini`, etc.) are
- * not accepted. Self-hosted instances are supported via `MANIFEST_BASE_URL`.
+ * LLM router. The request model is `auto` — the router picks the actual
+ * provider; anything else must be an exact Manifest model id from
+ * `GET /v1/models` (provider-native names like `gpt-4o-mini` fail with
+ * M302). Self-hosted instances are supported via `MANIFEST_BASE_URL`.
  * The client is built lazily so the app still boots without a key — only
  * generating actually needs one. There is no static fallback by design: a
  * missing/invalid key fails closed, the same posture as a missing JWT_SECRET

@@ -9,8 +9,8 @@ import {
 } from './category-classifier';
 
 const DEFAULT_BASE_URL = 'https://app.manifest.build/v1';
-/** Manifest's only valid request model — the router picks the provider. */
-const MODEL = 'manifest/auto';
+/** `auto` lets the router pick; `manifest/auto` is rejected with M302. */
+const MODEL = 'auto';
 
 const SYSTEM_PROMPT =
   'You are a supermarket-aisle classifier. Given the name of a grocery item ' +
@@ -21,8 +21,8 @@ const SYSTEM_PROMPT =
 
 /**
  * Manifest-backed auto-categorizer (manifest.build, OpenAI-compatible router).
- * `manifest/auto` is the only valid request model; routing is done at
- * Manifest's side. Every call is tagged with {@link CATEGORIZE_TAG} both via
+ * The request model is `auto`; routing is done at Manifest's side. Every
+ * call is tagged with {@link CATEGORIZE_TAG} both via
  * the `X-Manifest-Tag` header and the OpenAI `user` field so Bruno can pin
  * this traffic to a small/cheap model in app.manifest.build.
  *
