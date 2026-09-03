@@ -36,6 +36,7 @@ describe('ProjectTasksService', () => {
   let repo: jest.Mocked<IProjectRepository>;
   let gateway: jest.Mocked<Pick<ProjectsGateway, 'emitProjectUpdated'>>;
   let members: { findOne: jest.Mock };
+  let notifications: { notifyOthers: jest.Mock };
   let service: ProjectTasksService;
 
   beforeEach(() => {
@@ -55,7 +56,13 @@ describe('ProjectTasksService', () => {
     };
     gateway = { emitProjectUpdated: jest.fn() };
     members = { findOne: jest.fn() };
-    service = new ProjectTasksService(repo, members as never, gateway as never);
+    notifications = { notifyOthers: jest.fn().mockResolvedValue(undefined) };
+    service = new ProjectTasksService(
+      repo,
+      members as never,
+      gateway as never,
+      notifications as never,
+    );
   });
 
   describe('addTask', () => {

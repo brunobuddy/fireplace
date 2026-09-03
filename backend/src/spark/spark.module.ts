@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { Family } from '../family/entities/family.entity';
 import { Member } from '../family/entities/member.entity';
 import { SparkQuestion } from './entities/spark-question.entity';
@@ -25,6 +26,7 @@ import { StubQuestionGenerator } from './generator/stub-question-generator';
   imports: [
     TypeOrmModule.forFeature([SparkQuestion, SparkAnswer, Family, Member]),
     AuthModule,
+    NotificationsModule,
   ],
   controllers: [SparkController],
   providers: [

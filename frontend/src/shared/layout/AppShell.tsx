@@ -2,6 +2,7 @@ import { type Component, type JSX, For, Show } from 'solid-js';
 import { A, useLocation } from '@solidjs/router';
 import { useAuth } from '@/features/auth/auth-context';
 import { useFamily } from '@/features/family/family-context';
+import { NotificationBell } from '@/features/notifications/components/NotificationBell';
 import { Avatar } from '@/shared/ui/Avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
@@ -43,6 +44,7 @@ export const AppShell: Component<{ children?: JSX.Element }> = (props) => {
               </div>
             )}
           </Show>
+          <NotificationBell />
           <Button
             variant="ghost"
             size="icon"

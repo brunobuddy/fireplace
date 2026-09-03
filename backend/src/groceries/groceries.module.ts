@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { GroceryList } from './entities/grocery-list.entity';
 import { GroceryCategory } from './entities/grocery-category.entity';
 import { GroceryItem } from './entities/grocery-item.entity';
@@ -18,6 +19,7 @@ import { StubCategoryClassifier } from './categorizer/stub-category-classifier';
   imports: [
     TypeOrmModule.forFeature([GroceryList, GroceryCategory, GroceryItem]),
     AuthModule,
+    NotificationsModule,
   ],
   controllers: [GroceriesController],
   providers: [

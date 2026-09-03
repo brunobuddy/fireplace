@@ -13,6 +13,7 @@ import { CreateProjectTaskDto } from '../dto/create-project-task.dto';
 import { UpdateProjectTaskDto } from '../dto/update-project-task.dto';
 import { CreateTaskCommentDto } from '../dto/create-task-comment.dto';
 import { ProjectsGateway } from '../gateways/projects.gateway';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 
 /**
  * Task- and comment-level use cases inside a project. Every mutation ends the
@@ -27,6 +28,7 @@ export class ProjectTasksService {
     @InjectRepository(Member)
     private readonly members: Repository<Member>,
     private readonly gateway: ProjectsGateway,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async addTask(
@@ -39,13 +41,25 @@ export class ProjectTasksService {
       dto.assigneeId,
       project.familyId,
     );
+    const title = dto.title.trim();
     await this.projects.addTask({
       projectId,
-      title: dto.title.trim(),
+      title,
       priority: dto.priority ?? 'medium',
       assigneeId,
       createdById: memberId,
     });
+    // Fire-and-forget: tell the rest of the family, never block the add.
+    void this.notifications.notifyOthers(
+      memberId,
+      project.familyId,
+      (actor) => ({
+        title: 'Projets 🎯',
+        body: `${actor} a ajouté « ${title} » au projet « ${project.name} »`,
+        url: '/projects',
+        tag: `project-task-${projectId}`,
+      }),
+    );
     return this.broadcast(projectId);
   }
 
@@ -90,12 +104,22 @@ export class ProjectTasksService {
     dto: CreateTaskCommentDto,
     memberId: string,
   ): Promise<Project> {
-    await this.requireTask(projectId, taskId);
+    const { project, task } = await this.requireTask(projectId, taskId);
     await this.projects.addComment({
       taskId,
       authorId: memberId,
       body: dto.body.trim(),
     });
+    void this.notifications.notifyOthers(
+      memberId,
+      project.familyId,
+      (actor) => ({
+        title: 'Projets 💬',
+        body: `${actor} a commenté « ${task.title} »`,
+        url: '/projects',
+        tag: `project-comment-${taskId}`,
+      }),
+    );
     return this.broadcast(projectId);
   }
 

@@ -18,6 +18,11 @@
 #                     row-major (0 1 2 / 3 4 5 / 6 7 8) — six cells minimum.
 #                     ORDER MATTERS: the seeder maps the FIRST entry → Bruno
 #                     and the SECOND → Audrey on every boot.
+#   VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY
+#                   = fresh Web Push key pair (push notifications). ROTATING
+#                     these invalidates existing browser subscriptions — each
+#                     device re-enables via the in-app bell. Skipped (with a
+#                     warning) if the web-push dependency isn't installed.
 #
 # It deliberately does NOT set:
 #   DB_SSL    — the private DATABASE_URL is on Railway's isolated network and
@@ -88,6 +93,15 @@ gen_secret() {
   else
     node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
   fi
+}
+
+# Web Push (VAPID) key pair, via the backend's own web-push dependency.
+# Prints "publicKey privateKey" on one line; fails when web-push is missing.
+gen_vapid() {
+  ( cd "$REPO_ROOT/backend" && node -e "
+    const k = require('web-push').generateVAPIDKeys();
+    console.log(k.publicKey + ' ' + k.privateKey);
+  " ) 2>/dev/null
 }
 
 # Hashing a pattern needs the backend's own helper (bcryptjs + ts-node).
@@ -175,7 +189,8 @@ confirm_target() {
   service="${RAILWAY_SERVICE:-$(printf '%s\n' "$status" | sed -n 's/^Service: //p')}"
   [ -n "$project" ] || { err "Could not read the linked project from 'railway status'."; exit 1; }
 
-  warn "About to overwrite DATABASE_URL, DB_SYNCHRONIZE, JWT_SECRET, JWT_EXPIRES_IN and AUTH_USERS on:"
+  warn "About to overwrite DATABASE_URL, DB_SYNCHRONIZE, JWT_SECRET, JWT_EXPIRES_IN,"
+  warn "AUTH_USERS and the VAPID_* push keys (rotating them re-prompts each device) on:"
   warn "    project      $project"
   warn "    environment  ${environment:-<default>}"
   warn "    service      ${service:-<linked service>}"
@@ -244,6 +259,17 @@ main() {
     "JWT_EXPIRES_IN=$JWT_EXPIRES_IN"
     "AUTH_USERS=$auth_users"
   )
+
+  local vapid
+  if vapid="$(gen_vapid)" && [ -n "$vapid" ]; then
+    kv+=(
+      "VAPID_PUBLIC_KEY=${vapid%% *}"
+      "VAPID_PRIVATE_KEY=${vapid#* }"
+    )
+  else
+    warn "web-push not installed — skipping VAPID keys (push notifications stay off)."
+    warn "Generate later with: npm run push:generate-vapid --workspace=backend"
+  fi
 
   local svc_flag=()
   [ -n "$RAILWAY_SERVICE" ] && svc_flag=(--service "$RAILWAY_SERVICE")

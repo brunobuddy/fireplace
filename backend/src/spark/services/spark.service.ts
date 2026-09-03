@@ -20,6 +20,7 @@ import {
 } from '../generator/question-generator';
 import { SparkGateway } from '../gateways/spark.gateway';
 import { AnswerSparkDto } from '../dto/answer-spark.dto';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 import {
   SparkView,
   buildSparkView,
@@ -55,6 +56,7 @@ export class SparkService {
     @InjectRepository(Family)
     private readonly families: Repository<Family>,
     private readonly gateway: SparkGateway,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async getView(familyId: string, viewerMemberId: string): Promise<SparkView> {
@@ -102,6 +104,16 @@ export class SparkService {
       answeredMemberIds,
       revealed,
     });
+    // Fire-and-forget nudge to the partner. Only the *fact* of answering is
+    // pushed — answer text stays server-side until the reveal, like everywhere.
+    void this.notifications.notifyOthers(memberId, familyId, (actor) => ({
+      title: 'Spark ✨',
+      body: revealed
+        ? `${actor} a répondu — les deux réponses sont révélées !`
+        : `${actor} a répondu à la question du jour`,
+      url: '/spark',
+      tag: `spark-${question.id}`,
+    }));
     return buildSparkView(question, answers, participants, memberId);
   }
 

@@ -15,6 +15,7 @@ import {
   CATEGORY_CLASSIFIER,
   ICategoryClassifier,
 } from '../categorizer/category-classifier';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 
 export interface ListSnapshot {
   list: GroceryList;
@@ -42,6 +43,7 @@ export class GroceriesService {
     @Inject(CATEGORY_CLASSIFIER)
     private readonly classifier: ICategoryClassifier,
     private readonly gateway: GroceriesGateway,
+    private readonly notifications: NotificationsService,
   ) {}
 
   listCategories(): Promise<GroceryCategory[]> {
@@ -70,7 +72,7 @@ export class GroceriesService {
     dto: CreateGroceryItemDto,
     memberId: string,
   ): Promise<GroceryItem> {
-    await this.requireList(listId);
+    const list = await this.requireList(listId);
     const item = await this.items.create({
       listId,
       name: dto.name.trim(),
@@ -82,6 +84,13 @@ export class GroceriesService {
     });
     this.gateway.emitItemAdded(item);
     void this.categorizeInBackground(item);
+    // Fire-and-forget: tell the rest of the family, never block the add.
+    void this.notifications.notifyOthers(memberId, list.familyId, (actor) => ({
+      title: 'Courses 🧺',
+      body: `${actor} a ajouté « ${item.name} » à la liste`,
+      url: '/groceries',
+      tag: `grocery-${item.id}`,
+    }));
     return item;
   }
 

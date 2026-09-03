@@ -35,7 +35,8 @@ Open the URL, log in with one of the `AUTH_USERS` you entered. Done.
 
 > ⚠️ **`railway-setup.sh` writes to whatever service `railway link` last
 > selected**, and that link is global to your shell — not to this repo. It will
-> overwrite `DATABASE_URL`, `JWT_SECRET` and `AUTH_USERS` on that service. The
+> overwrite `DATABASE_URL`, `JWT_SECRET`, `AUTH_USERS` and the `VAPID_*` push
+> keys on that service. The
 > script therefore prints the target, refuses any project other than
 > `$EXPECTED_RAILWAY_PROJECT` (default `Fireplace`), refuses a database service,
 > and makes you type the project name; `--yes` skips only the typing and is
@@ -56,6 +57,8 @@ Open the URL, log in with one of the `AUTH_USERS` you entered. Done.
 | `JWT_SECRET`     | fresh 32-byte random hex       | setup script   | App refuses to boot in production without it. |
 | `JWT_EXPIRES_IN` | `7d`                           | setup script   | Token lifetime; optional. |
 | `AUTH_USERS`     | `email:pattern,email:pattern`  | setup script   | Two login pairs; the secret is an unlock pattern (grid cells row-major, six minimum), always bcrypt-hashed. **Order matters:** first → Bruno, second → Audrey (the seeder maps them onto the two hardcoded members on every boot). |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | fresh Web Push key pair | setup script | Push notifications (bell in the app header). Without them the app runs fine, the bell just never shows. **Rotating them drops every existing subscription** — each device re-enables via the bell. |
+| `VAPID_SUBJECT`  | `mailto:you@example.com`       | you (optional) | Contact sent to the push services; defaults to a placeholder. |
 | `LOGIN_*`        | see `.env.example`             | you (optional) | Throttle tuning. Defaults: 5 tries/min → 15-min lockout, 20/day, per (IP, email). |
 | `NODE_ENV`       | `production`                   | **image**      | Baked into `backend/Dockerfile` — nothing to set. |
 | `PORT`           | (injected)                     | **Railway**    | The app binds to it automatically. |
@@ -86,9 +89,12 @@ Railway's TCP proxy and does use TLS.
    JWT_SECRET=<paste a long random string>
    JWT_EXPIRES_IN=7d
    AUTH_USERS=bruno@your.app:<pattern-or-bcrypt-hash>,audrey@your.app:<…>
+   VAPID_PUBLIC_KEY=<from npm run push:generate-vapid>
+   VAPID_PRIVATE_KEY=<from npm run push:generate-vapid>
    ```
 
    - Generate a secret: `openssl rand -hex 32`
+   - Generate the push keys: `npm run push:generate-vapid --workspace=backend`
    - Bcrypt a pattern (recommended): `npm run auth:hash-pattern --workspace=backend -- 0-3-6-7-8-5-2`
      — it prints the walk as a grid so you can check it, canonicalizes the walk
      exactly as the phone does, and emits the hash. A plaintext pattern

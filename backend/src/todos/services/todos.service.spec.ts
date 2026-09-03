@@ -25,6 +25,7 @@ describe('TodosService', () => {
     Pick<TodosGateway, 'emitTodoAdded' | 'emitTodoUpdated' | 'emitTodoRemoved'>
   >;
   let families: { findOne: jest.Mock };
+  let notifications: { notifyOthers: jest.Mock };
   let service: TodosService;
 
   beforeEach(() => {
@@ -44,7 +45,13 @@ describe('TodosService', () => {
       emitTodoRemoved: jest.fn(),
     };
     families = { findOne: jest.fn() };
-    service = new TodosService(todos, families as never, gateway as never);
+    notifications = { notifyOthers: jest.fn().mockResolvedValue(undefined) };
+    service = new TodosService(
+      todos,
+      families as never,
+      gateway as never,
+      notifications as never,
+    );
   });
 
   describe('addTodo', () => {
