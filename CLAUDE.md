@@ -39,6 +39,17 @@ same way); a finished project is **archived** — history kept, hidden in a
 collapsed shelf until asked for. It replaced the "Agenda" and "Discussion"
 coming-soon tabs (nav is 4 tabs now).
 
+**Feature 5 (done): Lost — a minimal lost-and-found list** (tab label is the
+English "Lost"; the UI copy stays French). Someone types the name of a lost
+object; it shows up live for everyone. The check circle is the *only* "found"
+control (a body tap must not archive the search by accident); tapping the body
+expands a comment thread ("Où chercher ?") where the family suggests places to
+look; the trash deletes. Found items collapse into a "Retrouvés" shelf, with
+undo. Reports, finds and comments are stamped with the member from the JWT.
+Same todos-shaped module (aggregate port + TypeORM adapter, comment add/remove
+re-emits the whole object, gateway room `family-lost-objects:<id>`, `foundAt`
+ISO varchar) — nav is 5 tabs now.
+
 ## 2. Stack
 
 | Layer    | Choice                                                    |
@@ -111,7 +122,7 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
 
 ### Backend — SOLID, modular
 - Feature modules: `auth/`, `family/`, `groceries/`, `todos/`, `projects/`,
-  `spark/`, `health/`; `database/` owns the connection + bootstrap seeder. New
+  `lost-objects/`, `spark/`, `health/`; `database/` owns the connection + bootstrap seeder. New
   domains are added to `app.module.ts` without touching existing ones (OCP).
 - **Auth:** `auth/` gates the app and **is** the identity layer. `EnvUserStore`
   (the swap-for-DB seam, DIP) parses `AUTH_USERS` and feeds `AuthService`
@@ -192,10 +203,10 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
 
 ### Frontend — feature-sliced, fine-grained reactivity
 - `features/groceries`, `features/todos`, `features/projects`,
-  `features/family`, `features/auth`; shared `shared/ui`, `shared/layout`,
-  `components/ui` (the solid-ui layer — now incl. a `Textarea`); routing via
-  `@solidjs/router`, bottom-nav has a tab per view (4 tabs: Courses, À faire,
-  Projets, Spark). `relativeTime` lives in `lib/relative-time.ts` (todos
+  `features/lost-objects`, `features/family`, `features/auth`; shared
+  `shared/ui`, `shared/layout`, `components/ui` (the solid-ui layer — now
+  incl. a `Textarea`); routing via `@solidjs/router`, bottom-nav has a tab per
+  view (5 tabs: Courses, À faire, Projets, Lost, Spark). `relativeTime` lives in `lib/relative-time.ts` (todos
   re-exports it). The projects page is an accordion of `ProjectCard`s
   (progress bar + `done/total` in the header), tasks nested as a second
   accordion inside; the assignee picker feeds off `GET /families/:id/members`
@@ -330,7 +341,7 @@ npm run test:e2e     # backend e2e — in-memory SQLite, no DB needed
 npm run build        # nest build + vite build
 ```
 
-Current baseline: typecheck ✅ · lint ✅ · unit 133+117 ✅ · e2e 54 ✅ · build ✅.
+Current baseline: typecheck ✅ · lint ✅ · unit 141+128 ✅ · e2e 60 ✅ · build ✅.
 `test-fixtures/pattern-vectors.json` is read by **both** suites (via `fs`, not
 an import — it sits outside either tsconfig program) and is what keeps the two
 copies of the pattern canonicalizer honest; both specs also re-derive Android's
@@ -366,6 +377,9 @@ enum/jsonb; `status` is varchar). Backend lint = prettier-as-eslint; run
       daily cron)
 - [x] Projets — real-time project board (tasks with priority incl. Bloquant,
       one responsible member, comments, progress bar, archive)
+- [x] Lost — minimal real-time lost-and-found (report by name, one-tap
+      "retrouvé" on the check circle, "où chercher ?" comment thread,
+      collapsed found shelf)
 - [ ] Family agenda / shared calendar
 - [ ] Family conversations
 - [ ] Real per-user authentication (DB-backed accounts)

@@ -8,6 +8,7 @@ import { GroceryListView } from '@/features/groceries/components/GroceryListView
 import { TodoListView } from '@/features/todos/components/TodoListView';
 import { SparkView } from '@/features/spark/components/SparkView';
 import { ProjectsPage } from '@/features/projects/components/ProjectsPage';
+import { LostObjectsView } from '@/features/lost-objects/components/LostObjectsView';
 
 /** Persistent chrome wrapping every routed family view. */
 const Shell: Component<{ children?: JSX.Element }> = (props) => (
@@ -23,6 +24,7 @@ const AuthenticatedApp: Component = () => (
       <Route path="/todos" component={TodoListView} />
       <Route path="/spark" component={SparkView} />
       <Route path="/projects" component={ProjectsPage} />
+      <Route path="/lost-objects" component={LostObjectsView} />
       <Route path="*" component={() => <Navigate href="/groceries" />} />
     </Router>
   </FamilyProvider>
