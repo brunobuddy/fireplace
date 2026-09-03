@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { Family } from '../family/entities/family.entity';
 import { LostObject } from './entities/lost-object.entity';
 import { LostObjectComment } from './entities/lost-object-comment.entity';
@@ -14,6 +15,7 @@ import { TypeOrmLostObjectRepository } from './repositories/typeorm-lost-object.
   imports: [
     TypeOrmModule.forFeature([LostObject, LostObjectComment, Family]),
     AuthModule,
+    NotificationsModule,
   ],
   controllers: [LostObjectsController],
   providers: [

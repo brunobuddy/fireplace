@@ -23,6 +23,7 @@ describe('LostObjectsService', () => {
     Pick<LostObjectsGateway, 'emitAdded' | 'emitUpdated' | 'emitRemoved'>
   >;
   let families: { findOne: jest.Mock };
+  let notifications: { notifyOthers: jest.Mock };
   let service: LostObjectsService;
 
   beforeEach(() => {
@@ -42,10 +43,12 @@ describe('LostObjectsService', () => {
       emitRemoved: jest.fn(),
     };
     families = { findOne: jest.fn() };
+    notifications = { notifyOthers: jest.fn().mockResolvedValue(undefined) };
     service = new LostObjectsService(
       objects,
       families as never,
       gateway as never,
+      notifications as never,
     );
   });
 
@@ -67,6 +70,11 @@ describe('LostObjectsService', () => {
         reportedById: 'mem-1',
       });
       expect(gateway.emitAdded).toHaveBeenCalledWith(created);
+      expect(notifications.notifyOthers).toHaveBeenCalledWith(
+        'mem-1',
+        'fam-1',
+        expect.any(Function),
+      );
       expect(result).toBe(created);
     });
 
@@ -96,6 +104,11 @@ describe('LostObjectsService', () => {
         }),
       );
       expect(gateway.emitUpdated).toHaveBeenCalledWith(found);
+      expect(notifications.notifyOthers).toHaveBeenCalledWith(
+        'mem-2',
+        'fam-1',
+        expect.any(Function),
+      );
       expect(result.status).toBe('found');
     });
 
@@ -110,6 +123,7 @@ describe('LostObjectsService', () => {
         foundById: null,
         foundAt: null,
       });
+      expect(notifications.notifyOthers).not.toHaveBeenCalled();
     });
 
     it('rejects an unknown object', async () => {
@@ -140,6 +154,11 @@ describe('LostObjectsService', () => {
         body: 'Regarde sous le canapé',
       });
       expect(gateway.emitUpdated).toHaveBeenCalledWith(withComment);
+      expect(notifications.notifyOthers).toHaveBeenCalledWith(
+        'mem-2',
+        'fam-1',
+        expect.any(Function),
+      );
       expect(result).toBe(withComment);
     });
   });

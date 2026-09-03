@@ -10,6 +10,7 @@ import {
 import { CreateLostObjectDto } from '../dto/create-lost-object.dto';
 import { CreateLostObjectCommentDto } from '../dto/create-lost-object-comment.dto';
 import { LostObjectsGateway } from '../gateways/lost-objects.gateway';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 
 export interface LostObjectSnapshot {
   objects: LostObject[];
@@ -23,6 +24,7 @@ export class LostObjectsService {
     @InjectRepository(Family)
     private readonly families: Repository<Family>,
     private readonly gateway: LostObjectsGateway,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async getSnapshotForFamily(familyId: string): Promise<LostObjectSnapshot> {
@@ -42,6 +44,13 @@ export class LostObjectsService {
       reportedById: memberId,
     });
     this.gateway.emitAdded(object);
+    // Fire-and-forget: tell the rest of the family, never block the report.
+    void this.notifications.notifyOthers(memberId, familyId, (actor) => ({
+      title: 'Objet perdu 🔍',
+      body: `${actor} a perdu « ${object.name} »`,
+      url: '/lost-objects',
+      tag: `lost-object-${object.id}`,
+    }));
     return object;
   }
 
@@ -54,6 +63,18 @@ export class LostObjectsService {
       foundAt: nowFound ? new Date().toISOString() : null,
     });
     this.gateway.emitUpdated(updated);
+    if (nowFound) {
+      void this.notifications.notifyOthers(
+        memberId,
+        updated.familyId,
+        (actor) => ({
+          title: 'Objet retrouvé 🎉',
+          body: `${actor} a retrouvé « ${updated.name} »`,
+          url: '/lost-objects',
+          tag: `lost-object-found-${updated.id}`,
+        }),
+      );
+    }
     return updated;
   }
 
@@ -76,6 +97,16 @@ export class LostObjectsService {
     });
     const updated = await this.requireObject(objectId);
     this.gateway.emitUpdated(updated);
+    void this.notifications.notifyOthers(
+      memberId,
+      updated.familyId,
+      (actor) => ({
+        title: 'Objet perdu 💬',
+        body: `${actor} a suggéré un endroit pour « ${updated.name} »`,
+        url: '/lost-objects',
+        tag: `lost-object-comment-${objectId}`,
+      }),
+    );
     return updated;
   }
 
