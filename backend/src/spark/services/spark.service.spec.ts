@@ -43,6 +43,7 @@ describe('SparkService', () => {
   let gateway: jest.Mocked<Pick<SparkGateway, 'emitUpdated' | 'emitQuestion'>>;
   let members: { find: jest.Mock };
   let families: { findOne: jest.Mock; find: jest.Mock };
+  let notifications: { notifyOthers: jest.Mock };
   let service: SparkService;
 
   const bruno = parent('m-bruno', 'Bruno');
@@ -67,12 +68,14 @@ describe('SparkService', () => {
       findOne: jest.fn().mockResolvedValue({ id: 'fam-1' }),
       find: jest.fn(),
     };
+    notifications = { notifyOthers: jest.fn().mockResolvedValue(undefined) };
     service = new SparkService(
       spark,
       generator,
       members as never,
       families as never,
       gateway as never,
+      notifications as never,
     );
   });
 

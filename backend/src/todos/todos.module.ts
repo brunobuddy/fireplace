@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { Family } from '../family/entities/family.entity';
 import { Todo } from './entities/todo.entity';
 import { TodoComment } from './entities/todo-comment.entity';
@@ -11,7 +12,11 @@ import { TODO_REPOSITORY } from './repositories/todo.repository';
 import { TypeOrmTodoRepository } from './repositories/typeorm-todo.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Todo, TodoComment, Family]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([Todo, TodoComment, Family]),
+    AuthModule,
+    NotificationsModule,
+  ],
   controllers: [TodosController],
   providers: [
     TodosService,

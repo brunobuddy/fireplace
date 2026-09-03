@@ -10,6 +10,7 @@ import {
 import { CreateProjectDto } from '../dto/create-project.dto';
 import { UpdateProjectDto } from '../dto/update-project.dto';
 import { ProjectsGateway } from '../gateways/projects.gateway';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 
 export interface ProjectSnapshot {
   projects: Project[];
@@ -28,6 +29,7 @@ export class ProjectsService {
     @InjectRepository(Family)
     private readonly families: Repository<Family>,
     private readonly gateway: ProjectsGateway,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async getSnapshotForFamily(familyId: string): Promise<ProjectSnapshot> {
@@ -47,6 +49,13 @@ export class ProjectsService {
       createdById: memberId,
     });
     this.gateway.emitProjectAdded(project);
+    // Fire-and-forget: tell the rest of the family, never block the create.
+    void this.notifications.notifyOthers(memberId, familyId, (actor) => ({
+      title: 'Projets 🎯',
+      body: `${actor} a créé le projet « ${project.name} »`,
+      url: '/projects',
+      tag: `project-${project.id}`,
+    }));
     return project;
   }
 

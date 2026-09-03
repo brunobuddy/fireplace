@@ -12,6 +12,7 @@ import { CreateTodoDto } from '../dto/create-todo.dto';
 import { UpdateTodoDto } from '../dto/update-todo.dto';
 import { CreateTodoCommentDto } from '../dto/create-todo-comment.dto';
 import { TodosGateway } from '../gateways/todos.gateway';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 
 export interface TodoSnapshot {
   todos: Todo[];
@@ -25,6 +26,7 @@ export class TodosService {
     @InjectRepository(Family)
     private readonly families: Repository<Family>,
     private readonly gateway: TodosGateway,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async getSnapshotForFamily(familyId: string): Promise<TodoSnapshot> {
@@ -46,6 +48,13 @@ export class TodosService {
       createdById: memberId,
     });
     this.gateway.emitTodoAdded(todo);
+    // Fire-and-forget: tell the rest of the family, never block the add.
+    void this.notifications.notifyOthers(memberId, familyId, (actor) => ({
+      title: 'À faire ✅',
+      body: `${actor} a ajouté la tâche « ${todo.title} »`,
+      url: '/todos',
+      tag: `todo-${todo.id}`,
+    }));
     return todo;
   }
 
@@ -91,6 +100,16 @@ export class TodosService {
     });
     const updated = await this.requireTodo(todoId);
     this.gateway.emitTodoUpdated(updated);
+    void this.notifications.notifyOthers(
+      memberId,
+      updated.familyId,
+      (actor) => ({
+        title: 'À faire 💬',
+        body: `${actor} a commenté « ${updated.title} »`,
+        url: '/todos',
+        tag: `todo-comment-${todoId}`,
+      }),
+    );
     return updated;
   }
 

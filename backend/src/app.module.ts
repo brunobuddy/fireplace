@@ -12,6 +12,7 @@ import { GroceriesModule } from './groceries/groceries.module';
 import { TodosModule } from './todos/todos.module';
 import { ProjectsModule } from './projects/projects.module';
 import { SparkModule } from './spark/spark.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 /**
  * Composition root. Feature modules are independent and added here as the
@@ -36,6 +37,7 @@ import { SparkModule } from './spark/spark.module';
     TodosModule,
     ProjectsModule,
     SparkModule,
+    NotificationsModule,
     ...spaModule(),
   ],
 })
