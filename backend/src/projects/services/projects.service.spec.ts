@@ -40,6 +40,7 @@ describe('ProjectsService', () => {
     >
   >;
   let families: { findOne: jest.Mock };
+  let notifications: { notifyOthers: jest.Mock };
   let service: ProjectsService;
 
   beforeEach(() => {
@@ -50,10 +51,12 @@ describe('ProjectsService', () => {
       emitProjectRemoved: jest.fn(),
     };
     families = { findOne: jest.fn() };
+    notifications = { notifyOthers: jest.fn().mockResolvedValue(undefined) };
     service = new ProjectsService(
       projects,
       families as never,
       gateway as never,
+      notifications as never,
     );
   });
 

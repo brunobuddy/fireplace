@@ -46,6 +46,49 @@ function cachePut(key, response) {
   return response;
 }
 
+/*
+ * Web Push: the backend sends a JSON payload ({ title, body, url, tag }) to
+ * the subscribed family members — always "the others", never the person who
+ * acted. `tag` collapses bursts (several pushes about the same thing replace
+ * each other instead of stacking).
+ */
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  let payload;
+  try {
+    payload = event.data.json();
+  } catch {
+    return; // not ours — a malformed push must never throw in the worker
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title || 'Fireplace', {
+      body: payload.body || '',
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
+      tag: payload.tag || undefined,
+      data: { url: payload.url || '/' },
+    }),
+  );
+});
+
+// Tapping the notification focuses an open Fireplace tab (navigating it to
+// the relevant view) or opens a fresh one.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(
+    clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windows) => {
+        const existing = windows[0];
+        if (existing) {
+          return existing.focus().then(() => existing.navigate(url));
+        }
+        return clients.openWindow(url);
+      }),
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;

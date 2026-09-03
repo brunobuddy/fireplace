@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { Family } from '../family/entities/family.entity';
 import { Member } from '../family/entities/member.entity';
 import { Project } from './entities/project.entity';
@@ -23,6 +24,7 @@ import { TypeOrmProjectRepository } from './repositories/typeorm-project.reposit
       Member,
     ]),
     AuthModule,
+    NotificationsModule,
   ],
   controllers: [ProjectsController],
   providers: [

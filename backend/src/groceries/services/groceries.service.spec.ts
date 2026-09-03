@@ -35,6 +35,7 @@ describe('GroceriesService', () => {
   let lists: { findOne: jest.Mock; create: jest.Mock; save: jest.Mock };
   let categories: { find: jest.Mock };
   let classifier: jest.Mocked<ICategoryClassifier>;
+  let notifications: { notifyOthers: jest.Mock };
   let service: GroceriesService;
 
   beforeEach(() => {
@@ -55,12 +56,14 @@ describe('GroceriesService', () => {
     lists = { findOne: jest.fn(), create: jest.fn(), save: jest.fn() };
     categories = { find: jest.fn() };
     classifier = { classify: jest.fn().mockResolvedValue(null) };
+    notifications = { notifyOthers: jest.fn().mockResolvedValue(undefined) };
     service = new GroceriesService(
       items,
       lists as never,
       categories as never,
       classifier,
       gateway as never,
+      notifications as never,
     );
   });
 
