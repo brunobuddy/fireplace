@@ -11,6 +11,7 @@ import { FamilyModule } from './family/family.module';
 import { GroceriesModule } from './groceries/groceries.module';
 import { TodosModule } from './todos/todos.module';
 import { ProjectsModule } from './projects/projects.module';
+import { LostObjectsModule } from './lost-objects/lost-objects.module';
 import { SparkModule } from './spark/spark.module';
 import { NotificationsModule } from './notifications/notifications.module';
 
@@ -36,6 +37,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     GroceriesModule,
     TodosModule,
     ProjectsModule,
+    LostObjectsModule,
     SparkModule,
     NotificationsModule,
     ...spaModule(),

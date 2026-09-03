@@ -28,6 +28,14 @@ export const PROJECT_EVENTS = {
   PROJECT_REMOVED: 'project:removed',
 } as const;
 
+/** Lost-object events — must mirror the backend's `LOST_OBJECT_EVENTS`. */
+export const LOST_OBJECT_EVENTS = {
+  JOIN: 'lost-object:join',
+  ADDED: 'lost-object:added',
+  UPDATED: 'lost-object:updated',
+  REMOVED: 'lost-object:removed',
+} as const;
+
 /** Spark events — must mirror the backend's `SPARK_EVENTS`. Neither broadcast
  *  carries answer text, so secrecy holds over the wire. */
 export const SPARK_EVENTS = {

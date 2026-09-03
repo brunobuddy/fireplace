@@ -11,6 +11,7 @@ const NAV = [
   { href: '/groceries', label: 'Courses', icon: '🧺' },
   { href: '/todos', label: 'À faire', icon: '✅' },
   { href: '/projects', label: 'Projets', icon: '🎯' },
+  { href: '/lost-objects', label: 'Lost', icon: '🔍' },
   { href: '/spark', label: 'Spark', icon: '✨' },
 ] as const;
 
@@ -74,7 +75,7 @@ export const AppShell: Component<{ children?: JSX.Element }> = (props) => {
       </main>
 
       <nav
-        class="fixed bottom-0 left-1/2 z-20 grid w-full max-w-xl -translate-x-1/2 grid-cols-4 gap-1 border-t border-border/60 bg-card/85 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-md"
+        class="fixed bottom-0 left-1/2 z-20 grid w-full max-w-xl -translate-x-1/2 grid-cols-5 gap-1 border-t border-border/60 bg-card/85 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-md"
         aria-label="Sections de la famille"
       >
         <For each={NAV}>

@@ -162,6 +162,36 @@ export interface ProjectSnapshot {
   projects: Project[];
 }
 
+// ── Lost objects (report a misplaced thing, mark it found in one tap) ─────
+export type LostObjectStatus = 'lost' | 'found';
+
+export interface LostObjectComment {
+  id: string;
+  lostObjectId: string;
+  authorId: string;
+  author?: Member | null;
+  body: string;
+  createdAt: string;
+}
+
+export interface LostObject {
+  id: string;
+  name: string;
+  status: LostObjectStatus;
+  familyId: string;
+  reportedById: string;
+  reportedBy?: Member | null;
+  foundById: string | null;
+  foundBy?: Member | null;
+  foundAt: string | null;
+  comments: LostObjectComment[];
+  createdAt: string;
+}
+
+export interface LostObjectSnapshot {
+  objects: LostObject[];
+}
+
 // ── Spark (daily two-parent bonding question) ─────────────────────────────
 export interface SparkQuestionView {
   id: string;
