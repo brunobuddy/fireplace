@@ -41,7 +41,7 @@ coming-soon tabs (nav is 4 tabs now).
 
 **Feature 5 (done): Web Push notifications.** Every board mutation that adds
 content (grocery item, to-do, to-do comment, project, project task, task
-comment, Spark answer, lost object + its suggestions) pushes a notification to
+comment, Spark answer, lost object + its suggestions, entrance message) pushes a notification to
 the **other** subscribed family members — never to the person who acted.
 Standard PWA push (VAPID via `web-push`); a bell toggle in the app header
 manages the per-device subscription. Works on the installed Android PWA and
@@ -58,6 +58,16 @@ Same todos-shaped module (aggregate port + TypeORM adapter, comment add/remove
 re-emits the whole object, gateway room `family-lost-objects:<id>`, `foundAt`
 ISO varchar) — nav is 5 tabs now. Reporting an object, marking it found and
 suggesting a location each notify the other members (web push).
+
+**Feature 7 (done): Message pour l'entrée — one short note for the entrance
+screen.** A jailbroken Kindle on the wall by the door (clock/weather
+dashboard) shows a single family message. A pin icon in the app header (next
+to the bell — no 6th tab) opens a sheet: the current message ("par <Name> ·
+<relative time>"), a 280-char textarea with a live counter, "Afficher sur
+l'entrée" and "Effacer". Posting replaces the previous message; an empty /
+whitespace-only post clears it. Author stamped from the JWT; live over the
+socket; posting notifies the other members (web push). The Kindle reads a
+plain-text feed with a static `DEVICE_TOKEN` (it can't draw the pattern).
 
 ## 2. Stack
 
@@ -131,7 +141,7 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
 
 ### Backend — SOLID, modular
 - Feature modules: `auth/`, `family/`, `groceries/`, `todos/`, `projects/`,
-  `lost-objects/`, `spark/`, `health/`; `database/` owns the connection + bootstrap seeder. New
+  `lost-objects/`, `entrance-message/`, `spark/`, `health/`; `database/` owns the connection + bootstrap seeder. New
   domains are added to `app.module.ts` without touching existing ones (OCP).
 - **Auth:** `auth/` gates the app and **is** the identity layer. `EnvUserStore`
   (the swap-for-DB seam, DIP) parses `AUTH_USERS` and feeds `AuthService`
@@ -192,6 +202,25 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   `SparkGateway` broadcast carries only *who* answered, never the text. A
   daily `@Cron` (`@nestjs/schedule`) rolls a fully-answered question over to a
   fresh one; the "✨ New question" button hits the same path on demand.
+- **Entrance message** — one row per family (`entrance_messages`, unique
+  `familyId`, `text` varchar(280), nullable `authorId` → Member `SET NULL`),
+  behind an `IEntranceMessageRepository` port (find / upsert / clear). The DTO
+  trims *before* `@MaxLength(280)`; an empty text deletes the row. `GET|PUT
+  /api/families/:familyId/entrance-message` → `{ message: { text, authorId,
+  authorName, updatedAt } | null }`, refused (403) for another family than the
+  JWT's. `EntranceMessageGateway` (room `family-entrance-message:<id>`, events
+  `entrance-message:join` / `entrance-message:updated` with `{ familyId,
+  message }`) — a single "here is the state now" event, so the client just
+  replaces. A re-post bumps `updatedAt` explicitly (TypeORM skips a no-change
+  save). **Device feed:** `GET /api/device/entrance-message` is `@Public()`
+  (lifts the JWT guard only) and checks `Authorization: Bearer <DEVICE_TOKEN>`
+  itself — SHA-256 both sides + `timingSafeEqual`; **unset token → 401 for
+  everyone (fail closed)**. Family = `DEVICE_FAMILY_ID`, else the seeded `Home`
+  household (`HOUSEHOLD_FAMILY_NAME`), else the oldest family. The Kindle has
+  busybox sh + sed and no JSON parser, so the body is `text/plain;
+  charset=utf-8`: `author=<name>\nupdated=<epoch s>\n\n<text>\n` (CR
+  stripped), or **204** with no body when there's no message. Read-only, not
+  under login throttling (it's a static high-entropy token, not a pattern).
 - **Notifications** — Web Push behind an `IPushSender` port (`web-push` VAPID
   adapter in dev/prod, a recording stub under `NODE_ENV=test`). Keys come from
   `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` (`npm run push:generate-vapid
@@ -227,7 +256,7 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
 - `features/groceries`, `features/todos`, `features/projects`,
   `features/lost-objects`, `features/family`, `features/auth`; shared
   `shared/ui`, `shared/layout`, `components/ui` (the solid-ui layer — now
-  incl. a `Textarea`); routing via `@solidjs/router`, bottom-nav has a tab per
+  incl. a `Textarea` and a Kobalte `Dialog` sheet); routing via `@solidjs/router`, bottom-nav has a tab per
   view (5 tabs: Courses, À faire, Projets, Lost, Spark). `relativeTime` lives in `lib/relative-time.ts` (todos
   re-exports it). The projects page is an accordion of `ProjectCard`s
   (progress bar + `done/total` in the header), tasks nested as a second
@@ -260,6 +289,11 @@ Monorepo via npm workspaces: `backend/` (`@fireplace/backend`),
   regenerated by `scripts/generate-pwa-icons.sh` from a flat flame mark —
   **flat fills only**: the build host's sole SVG rasteriser is ImageMagick's
   MSVG, which renders gradient refs as black.
+- **Entrance message** (`features/entrance-message/`): `EntranceMessageButton`
+  lives in the `AppShell` header (pin icon, dot while a message is up) and owns
+  the controller, so the socket subscription is app-wide; the sheet body is the
+  pure `EntranceMessagePanel`. Writes are optimistic, the response and the
+  broadcast both replace the whole message (idempotent).
 - **Push client** (`features/notifications/`): the header bell walks the
   standard flow — permission → `pushManager.subscribe` with the server's VAPID
   key → POST the subscription. State lives in the browser (permission +
@@ -358,6 +392,12 @@ config path to set in the dashboard. Full walkthrough: `deploy/RAILWAY.md`.
      subscriptions — each device re-enables via the bell.)
    - `VAPID_SUBJECT = mailto:you@example.com`  (optional contact for push
      services.)
+   - `DEVICE_TOKEN = <openssl rand -hex 32>`  (optional — the entrance
+     Kindle's bearer for `GET /api/device/entrance-message`. Unset → that
+     endpoint is closed (401). Not generated by `railway-setup.sh`, so a re-run
+     never rotates it under the screen.)
+   - `DEVICE_FAMILY_ID = <family uuid>`  (optional; defaults to the seeded
+     `Home` household.)
    - **Don't set `DB_SSL`** with the private `DATABASE_URL` — that network has
      no TLS and forcing it fails with "server does not support SSL". Set
      `DB_SSL=true` only if you switch to the public URL (`DATABASE_PUBLIC_URL`).
@@ -379,7 +419,7 @@ npm run test:e2e     # backend e2e — in-memory SQLite, no DB needed
 npm run build        # nest build + vite build
 ```
 
-Current baseline: typecheck ✅ · lint ✅ · unit 148+131 ✅ · e2e 66 ✅ · build ✅.
+Current baseline: typecheck ✅ · lint ✅ · unit 165+145 ✅ · e2e 78 ✅ · build ✅.
 `test-fixtures/pattern-vectors.json` is read by **both** suites (via `fs`, not
 an import — it sits outside either tsconfig program) and is what keeps the two
 copies of the pattern canonicalizer honest; both specs also re-derive Android's
@@ -419,6 +459,8 @@ enum/jsonb; `status` is varchar). Backend lint = prettier-as-eslint; run
 - [x] Lost — minimal real-time lost-and-found (report by name, one-tap
       "retrouvé" on the check circle, "où chercher ?" comment thread,
       collapsed found shelf, push notifications)
+- [x] Message pour l'entrée — one note for the entrance Kindle (header sheet,
+      realtime, push, plain-text device feed behind `DEVICE_TOKEN`)
 - [ ] Family agenda / shared calendar
 - [ ] Family conversations
 - [ ] Real per-user authentication (DB-backed accounts)

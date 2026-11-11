@@ -2,6 +2,7 @@ import { type Component, type JSX, For, Show } from 'solid-js';
 import { A, useLocation } from '@solidjs/router';
 import { useAuth } from '@/features/auth/auth-context';
 import { useFamily } from '@/features/family/family-context';
+import { EntranceMessageButton } from '@/features/entrance-message/components/EntranceMessageButton';
 import { NotificationBell } from '@/features/notifications/components/NotificationBell';
 import { Avatar } from '@/shared/ui/Avatar';
 import { Button } from '@/components/ui/button';
@@ -36,14 +37,17 @@ export const AppShell: Component<{ children?: JSX.Element }> = (props) => {
           <Show when={currentMember()}>
             {(m) => (
               <div
-                class="flex items-center gap-2 rounded-full border border-border/70 bg-card py-1 pl-1 pr-2.5 shadow-cosy"
+                class="flex items-center gap-2 rounded-full border border-border/70 bg-card py-1 pl-1 pr-1 shadow-cosy min-[400px]:pr-2.5"
                 aria-label={`Connecté en tant que ${m().name}`}
               >
                 <Avatar name={m().name} color={m().color} size="sm" />
-                <span class="text-sm font-bold">{m().name}</span>
+                <span class="hidden text-sm font-bold min-[400px]:inline">
+                  {m().name}
+                </span>
               </div>
             )}
           </Show>
+          <EntranceMessageButton />
           <NotificationBell />
           <Button
             variant="ghost"

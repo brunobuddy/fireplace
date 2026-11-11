@@ -192,6 +192,25 @@ export interface LostObjectSnapshot {
   objects: LostObject[];
 }
 
+// ── Entrance message (one note shown on the e-ink screen by the door) ─────
+export interface EntranceMessage {
+  text: string;
+  authorId: string | null;
+  authorName: string | null;
+  /** ISO 8601. */
+  updatedAt: string;
+}
+
+export interface EntranceMessageResponse {
+  message: EntranceMessage | null;
+}
+
+/** Socket broadcast: the message as it now stands, or null once cleared. */
+export interface EntranceMessageUpdate {
+  familyId: string;
+  message: EntranceMessage | null;
+}
+
 // ── Spark (daily two-parent bonding question) ─────────────────────────────
 export interface SparkQuestionView {
   id: string;

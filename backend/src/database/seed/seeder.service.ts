@@ -15,7 +15,7 @@ import { CATEGORY_SEED } from './categories.seed';
  * household with two parents); emails come from AUTH_USERS at runtime so they
  * stay out of source control. First AUTH_USERS entry → Bruno, second → Audrey.
  */
-const FAMILY_NAME = 'Home';
+export const HOUSEHOLD_FAMILY_NAME = 'Home';
 const PARENTS = [
   { name: 'Bruno', color: '#c2410c' },
   { name: 'Audrey', color: '#d97706' },
@@ -102,13 +102,13 @@ export class SeederService implements OnApplicationBootstrap {
 
   private async ensureFamily(): Promise<Family> {
     const existing = await this.families.findOne({
-      where: { name: FAMILY_NAME },
+      where: { name: HOUSEHOLD_FAMILY_NAME },
     });
     if (existing) {
       return existing;
     }
     const created = await this.families.save(
-      this.families.create({ name: FAMILY_NAME }),
+      this.families.create({ name: HOUSEHOLD_FAMILY_NAME }),
     );
     this.logger.log(`Seeded family "${created.name}" (${created.id})`);
     return created;

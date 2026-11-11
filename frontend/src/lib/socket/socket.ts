@@ -36,6 +36,13 @@ export const LOST_OBJECT_EVENTS = {
   REMOVED: 'lost-object:removed',
 } as const;
 
+/** Entrance-message events — must mirror the backend's
+ *  `ENTRANCE_MESSAGE_EVENTS`. One event: the whole message, or null. */
+export const ENTRANCE_MESSAGE_EVENTS = {
+  JOIN: 'entrance-message:join',
+  UPDATED: 'entrance-message:updated',
+} as const;
+
 /** Spark events — must mirror the backend's `SPARK_EVENTS`. Neither broadcast
  *  carries answer text, so secrecy holds over the wire. */
 export const SPARK_EVENTS = {
