@@ -12,6 +12,7 @@ import { GroceriesModule } from './groceries/groceries.module';
 import { TodosModule } from './todos/todos.module';
 import { ProjectsModule } from './projects/projects.module';
 import { LostObjectsModule } from './lost-objects/lost-objects.module';
+import { EntranceMessageModule } from './entrance-message/entrance-message.module';
 import { SparkModule } from './spark/spark.module';
 import { NotificationsModule } from './notifications/notifications.module';
 
@@ -38,6 +39,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     TodosModule,
     ProjectsModule,
     LostObjectsModule,
+    EntranceMessageModule,
     SparkModule,
     NotificationsModule,
     ...spaModule(),
